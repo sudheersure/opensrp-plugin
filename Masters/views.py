@@ -126,6 +126,7 @@ def poc_update(request):
 
 
 def doctor_data(request):
+    ''' Method to show all pending cases on doctor home screen with patient details'''
     if request.method == "GET":
         doc_name= request.GET.get('docname',"")
         password = request.GET.get('pwd',"")
@@ -138,16 +139,22 @@ def doctor_data(request):
     doc_pwd.update(password)
     doc_password = doc_pwd.hexdigest()
     user_pwd_db = DimUserLogin.objects.filter(name=str(doc_name)).values_list('password')
-    if str(user_pwd_db[0][0]) != str(doc_password):
-        return HttpResponse(json.dumps({'result':'Invalid username/password'}))    
     resultdata=defaultdict(list)
     display_result=[]
-    entity_list = PocInfo.objects.filter(phc=doc_phc).values_list('visitentityid','entityidec').distinct()
+    entity_list = PocInfo.objects.filter(phc=doc_phc).values_list('visitentityid','entityidec','pending','docid').distinct()
+
+    #If no record availble for doctor screen display
     if len(entity_list) == 0:
     	return HttpResponse(json.dumps(display_result))
+
+    #Iterating all pending cases to display over doctor home screen
     for entity in entity_list:
+        if str(entity[2])!='None':
+            if len(entity[2])>1 and str(doc_name) != str(entity[3]):
+                continue
     	entity_detail_id=str(entity[1])
-        ancvisit_detail="curl -s -H -X GET http://localhost:5984/drishti-form/_design/FormSubmission/_view/by_EntityId?key=%22"+str(entity[0])+"%22"
+        #Curl command to read visit related data
+        ancvisit_detail="curl -s -H -X GET http://202.153.34.169:5984/drishti-form/_design/FormSubmission/_view/by_EntityId?key=%22"+str(entity[0])+"%22"
         visit_output = commands.getoutput(ancvisit_detail)
         visit_data1 = json.loads(visit_output)
         row = visit_data1['rows']
@@ -166,7 +173,9 @@ def doctor_data(request):
                         poc_len=len(fd['value'])
                     elif fd['name'] == 'isConsultDoctor':
                         doc_con = fd['value']
-            if poc_len == 0 and doc_con == 'yes':
+            #Check if record is recommended for doctor consultation
+            if doc_con == 'yes':
+                #-----------------PNC DATA --------------
                 if row[i]['value'][0] == 'pnc_visit':
                     doc_id=row[i]['id']
                     for visitdata in row[i]['value'][1]['form']['fields']:
@@ -293,8 +302,8 @@ def doctor_data(request):
                         	visit['id']=doc_id
                         	visit["entityid"] = entity[0]
                     visit_data.append(visit)
-
-        entity_detail="curl -s -H -X GET http://localhost:5984/drishti-form/_design/FormSubmission/_view/by_EntityId?key=%22"+entity_detail_id+"%22"
+        #CURL command to read registration related info
+        entity_detail="curl -s -H -X GET http://202.153.34.169:5984/drishti-form/_design/FormSubmission/_view/by_EntityId?key=%22"+entity_detail_id+"%22"
         poc_output=commands.getoutput(entity_detail)
         poutput=json.loads(poc_output)
         row1 = poutput['rows']
