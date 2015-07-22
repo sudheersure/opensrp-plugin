@@ -47,22 +47,6 @@ def get_drugdata(request):
     result_json = json.dumps(all_info)
     return HttpResponse(result_json)
 
-def poc_data(request):
-    result = defaultdict(list)
-    poc_details = PocInfo.objects.all().values_list('visitentityid','entityidec','anmid','level','clientversion','serverversion','visittype')
-    for poc in poc_details:
-        pocinfo={}
-        pocinfo['visitentityid']=poc[0]
-        pocinfo['entityidec'] =poc[1]
-        pocinfo['anmid']= poc[2]
-        pocinfo['level']=poc[3]
-        pocinfo['clientversion']=poc[4]
-        pocinfo['serverversion']=poc[5]
-        pocinfo['visitype']=poc[6]
-        result['pocdata'].append(pocinfo)
-    result_json = json.dumps(result)
-    return HttpResponse(result_json)
-
 def poc_update(request):
     if request.method =="GET":
         document_id=request.GET.get("docid","")
@@ -70,6 +54,7 @@ def poc_update(request):
         visitid=request.GET.get("visitid","")
         entityid=request.GET.get("entityid","")
         docid=request.GET.get("doctorid","")
+        pending =request.GET.get("pending","")
 
     elif request.method =="POST":
         document_id=request.POST.get("docid","")
@@ -77,18 +62,43 @@ def poc_update(request):
         visitid=request.POST.get("visitid","")
         entityid=request.POST.get("entityid","")
         docid=request.POST.get("doctorid","")
+        pending =request.POST.get("pending","")
+    poc = []
+    poc_data = {}
+    poc_data['pending']=pending
+    poc_data['poc'] = str(poc_info)
+    poc.append(poc_data)
+    poc_backup = json.dumps(poc)
+
+    #Adding poc and related doctor to backup table helpful for history
+    add_poc_backup = PocBackup(visitentityid=str(visit_info[0][0]),entityidec=str(visit_info[0][1]),docid=str(docid),poc=poc_backup)
+    add_poc_backup.save()
+
+    #Getting old poc value give to patient
+    visit_backup = PocBackup.objects.filter(visitentityid=str(visitid),entityidec=str(entityid)).values_list('poc','id')
+    if len(visit_backup)>0:
+    	for visit in visit_backup:
+            old_poc= json.loads(visit[0][0])
+            poc.append(old_poc)
+
+    #Reading all values from document
     result = {}
-    entity_detail="curl -s -H -X GET http://localhost:5984/drishti-form/_design/FormSubmission/_view/by_id/?key=%22"+str(document_id)+"%22"
+    entity_detail="curl -s -H -X GET http://202.153.34.169:5984/drishti-form/_design/FormSubmission/_view/by_id/?key=%22"+str(document_id)+"%22"
     poc_output=commands.getoutput(entity_detail)
     poutput=json.loads(poc_output)
     form_ins= poutput['rows'][0]['value'][2]
     row_data = poutput['rows'][0]['value'][2]['formInstance']['form']['fields']
-    for i in range((len(row_data)-1),-1,-1):
+    #Updating docPocInfo with pending reason or poc
+    for i in range((len(row_data))):
         row = row_data[i]
         if 'name' in row.keys():
-            if row['name'] == 'docPocInfo':
-                row['value'] = str(poc_info)
-                row_data[i]=row
+            if str(row['name']) == 'docPocInfo':
+                old_poc = json.loads(row['value'])
+                if len(old_poc)==0:
+                    poc_json = json.dumps(poc)
+                    row['value']=poc_json
+                    row_data[i]=row
+    #Creating new document with latest docPocInfo
     result["_id"]=str(form_ins["_id"])
     result["_rev"]=str(form_ins["_rev"])
     result["anmId"]=str(form_ins["anmId"])
@@ -101,13 +111,19 @@ def poc_update(request):
     result["serverVersion"]=int(round(time.time() * 1000))
     result["type"]=str(form_ins["type"])
     ord_result = json.dumps(result)
-    poc_doc_update_curl = "curl -vX PUT http://localhost:5984/drishti-form/%s -d '''%s'''" %(str(document_id),ord_result)
+    poc_doc_update_curl = "curl -vX PUT http://202.153.34.169:5984/drishti-form/%s -d '''%s'''" %(str(document_id),ord_result)
     poc_doc_update=commands.getoutput(poc_doc_update_curl)
-    poc_info = PocInfo.objects.filter(visitentityid=str(visitid),entityidec=str(entityid)).values_list('visitentityid','entityidec')
-    poc_backup = PocBackup(visitentityid=str(poc_info[0][0]),entityidec=str(poc_info[0][1]),docid=str(docid))
-    poc_backup.save()
-    del_poc = PocInfo.objects.filter(visitentityid=str(visitid),entityidec=str(entityid)).delete()
+
+    if len(pending)>0:
+        update_poc=PocInfo.objects.filter(visitentityid=str(visitid),entityidec=str(entityid)).update(pending=str(pending),docid=str(docid))
+
+    #Updating backup table with latest poc/pending status info
+    visit_info = PocInfo.objects.filter(visitentityid=str(visitid),entityidec=str(entityid)).values_list('visitentityid','entityidec')
+    if len(pending)==0:
+        #Removing record provided POC
+        del_poc = PocInfo.objects.filter(visitentityid=str(visitid),entityidec=str(entityid)).delete()
     return HttpResponse(json.dumps({"status":"success"}))
+
 
 def doctor_data(request):
     if request.method == "GET":
