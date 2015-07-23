@@ -29,6 +29,7 @@ class DimAnm(models.Model):
     phc = models.ForeignKey('DimPhc', db_column='phc')
     subcenter = models.CharField(max_length=100,)
     name = models.CharField(max_length=100)
+    active = models.BooleanField(default=True)
 
     class Meta:
         managed = False
@@ -44,6 +45,7 @@ class DimAnm(models.Model):
 class DimIndicator(models.Model):
     #id = models.IntegerField(primary_key=True)  # AutoField?
     indicator = models.CharField(unique=True, max_length=100)
+    active = models.BooleanField(default=True)
 
     class Meta:
         managed = False
@@ -63,6 +65,7 @@ class DimLocation(models.Model):
     taluka = models.CharField(max_length=100)
     district = models.CharField(max_length=100)
     state = models.CharField(max_length=100)
+    active = models.BooleanField(default=True)
 
     class Meta:
         managed = False
@@ -83,6 +86,7 @@ class DimPhc(models.Model):
     #id = models.IntegerField(primary_key=True)  # AutoField?
     phcidentifier = models.CharField(unique=True, max_length=100)
     name = models.CharField(max_length=100)
+    active = models.BooleanField(default=True)
 
     class Meta:
         managed = False
@@ -98,6 +102,7 @@ class DimServiceProvider(models.Model):
     #id = models.IntegerField(primary_key=True)  # AutoField?
     service_provider = models.IntegerField()
     type = models.ForeignKey('DimServiceProviderType', db_column='type')
+    active = models.BooleanField(default=True)
 
     class Meta:
         managed = False
@@ -110,6 +115,7 @@ class DimServiceProvider(models.Model):
 class DimServiceProviderType(models.Model):
     #id = models.IntegerField(primary_key=True)  # AutoField?
     type = models.CharField(unique=True,max_length=100)
+    active = models.BooleanField(default=True)
 
     class Meta:
         managed = False
@@ -230,6 +236,7 @@ class DimUserLogin(models.Model):
     name = models.CharField(unique=True,max_length=30)
     password = models.CharField(max_length=128)
     user_role = models.ForeignKey(DimServiceProviderType, db_column='user_role', blank=True, null=True)
+    active = models.BooleanField(default=True)
 
     class Meta:
         managed = False
@@ -353,6 +360,7 @@ class DrugInfo(models.Model):
     frequency = models.ForeignKey('Frequency', db_column='frequency',null=True,blank=True,limit_choices_to={'active': True},on_delete=models.SET_NULL)
     dosage = models.ForeignKey('Dosage', db_column='dosage',null=True,blank=True,limit_choices_to={'active': True},on_delete=models.SET_NULL)
     direction = models.ForeignKey('Directions', db_column='direction',null=True,blank=True,limit_choices_to={'active': True},on_delete=models.SET_NULL)
+    active = models.BooleanField(default=True)
 
     class Meta:
         managed = False
@@ -469,6 +477,7 @@ class PocInfo(models.Model):
     serverversion = models.CharField(max_length=35)
     visittype = models.CharField(max_length=35)
     phc = models.CharField(max_length=100)
+    active = models.BooleanField(default=True)
 
     class Meta:
         managed = False
@@ -483,6 +492,7 @@ class PocInfo(models.Model):
 class DocInfo(models.Model):
     docname = models.CharField(unique=True,max_length=100)
     phc = models.ForeignKey('DimPhc', db_column='phc')
+    active = models.BooleanField(default=True)
     
     class Meta:
         verbose_name_plural="DOCTORS"
