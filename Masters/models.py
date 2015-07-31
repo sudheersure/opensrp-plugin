@@ -6,6 +6,7 @@ from django.conf import settings
 from django.db.models.signals import post_save
 import hashlib
 import commands
+from django.shortcuts import render_to_response, redirect, get_object_or_404
 
 class AnnualTarget(models.Model):
     #id = models.IntegerField(primary_key=True)  # AutoField?
@@ -517,3 +518,99 @@ class PocBackup(models.Model):
     class Meta:
         managed = False
         db_table = 'poc_backup'
+
+class UserMaintenance(models.Model):
+    #id = models.IntegerField(unique=True,primary_key=True)
+    # USER_ROLE = (('ROLE_USER','ANM'),('ROLE_PHC_USER','PHC'),('ROLE_DOC_USER','DOC'))
+    user_role = models.CharField(max_length=100)
+    user_id = models.CharField(max_length=100)
+    #user_name = models.CharField(max_length=200)
+    firstname = models.CharField(max_length=200)
+    lastname = models.CharField(max_length=200)
+    password = models.CharField(max_length=200)
+    hospital = models.CharField(max_length=100)
+    mobile = models.IntegerField()
+    email = models.CharField(max_length=150)
+    village = models.CharField(max_length=100)
+    status = models.BooleanField()
+    pnc = models.BooleanField()
+    anc = models.BooleanField()
+    ec = models.BooleanField()
+    child = models.BooleanField()
+    fp = models.BooleanField()
+
+    class Meta:
+        verbose_name_plural="USER MAINTENANCE"
+        managed = False
+        db_table = 'user_maintenance'
+        verbose_name="USER MAINTENANCE"
+
+    def __unicode__(self):
+        return self.user_id
+
+    def save(self, *args, **kwargs):
+        m = hashlib.sha1()
+        m.update(self.password)
+        self.password = m.hexdigest()
+        super(UserMaintenance, self).save(*args, **kwargs)
+
+@receiver(post_save, sender=UserMaintenance)
+def usermaintenance_post(sender,instance,**kwargs):
+    user_curl = "curl -s -H -X GET http://202.153.34.169:5984/drishti/_design/DrishtiUser/_view/by_username?key="+"%22"+str(instance.user_id)+"%22"
+    user_data = commands.getoutput(user_curl) 
+    output = json.loads(user_data)
+    output = dict(output)
+    row = output['rows']
+    if len(row)>0:
+        id_val = dict(output['rows'][0])
+        rev_curl = "curl -s -H -X GET http://202.153.34.169:5984/drishti/"+id_val['id']
+        rev_data = commands.getoutput(rev_curl)
+        rev_data = dict(json.loads(rev_data))
+        delet_curl = "curl -X DELETE http://202.153.34.169:5984/drishti/"+id_val['id']+"/?rev\="+rev_data['_rev']
+        user_data = commands.getoutput(delet_curl) 
+    user_pwd=DimUserLogin.objects.filter(name=str(instance)).values_list('password')
+    cmd = '''curl -s -H Content-Type:application/json -d '{"docs": [{"type": "DrishtiUser","username": "%s","password": "%s","active": true,"roles": ["%s"]  } ]}' -X POST http://202.153.34.169:5984/drishti/_bulk_docs''' %(str(instance.user_id),str(instance.password),str(instance.user_role))
+    res = commands.getstatusoutput(cmd)
+    
+post_save.connect(usermaintenance_post,sender=UserMaintenance)
+
+class HospitalDetails(models.Model):
+#    id = models.IntegerField(primary_key=True)  # AutoField?
+    country = models.CharField(max_length=100)
+    hospital_name = models.CharField(max_length=100)
+    hospital_type = models.CharField(max_length=100)
+    parent_hospital = models.CharField(max_length=100)
+    address = models.CharField(max_length=300)
+    village = models.CharField(max_length=300, blank=True)
+    status = models.BooleanField(default=True)
+
+    class Meta:
+        verbose_name_plural="HOSPITAL DETAILS"
+        managed = False
+        db_table = 'hospital_details'
+        verbose_name= "HOSPITAL DETAILS"
+
+    def __unicode__(self):
+    	return self.hospital_name
+
+class HospitalType(models.Model):
+    id = models.IntegerField(primary_key=True)  # AutoField?
+    types = models.CharField(max_length=100)
+
+    class Meta:
+        managed = False
+        db_table = 'hospital_type'
+    def __unicode__(self):
+        return self.types
+
+class CountryTb(models.Model):
+    id = models.IntegerField(primary_key=True)  # AutoField?
+    country_name = models.CharField(max_length=100)
+
+    class Meta:
+        verbose_name_plural="COUNTRY"
+        managed = False
+        db_table = 'country_tb'
+        verbose_name="COUNTRY"
+    def __unicode__(self):
+        return self.country_name
