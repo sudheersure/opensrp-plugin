@@ -6,6 +6,9 @@ from collections import defaultdict
 import time
 from datetime import date, timedelta
 import datetime
+from django.shortcuts import render_to_response
+from Masters.forms import *
+from django.core.context_processors import csrf
 
 def doc_data(request):
     result = []
@@ -375,3 +378,353 @@ def doctor_data(request):
             display_result.append(result)
         end_res= json.dumps(display_result)
     return HttpResponse(end_res)
+
+def admin_hospital(request):
+    hosname = HospitalDetails.objects.all().values_list('hospital_name')
+    hos_name=[]
+    for x in hosname:
+        hos_name.append(x[0])
+    
+    c = {}
+    c.update(csrf(request))
+    return render_to_response('hospital.html',{'x':hos_name,'csrf_token':c['csrf_token']})
+
+def get_hospital(request):
+    if request.method == "GET":
+        type_name= request.GET.get('devata',"")
+        
+    elif request.method == "POST":
+        type_name= request.GET.get('devata',"")
+    
+    if str(type_name) == 'district':
+        address = DimLocation.objects.all().values_list('district').distinct()
+    elif str(type_name) == 'taluka':
+        address = DimLocation.objects.all().values_list('taluka').distinct()
+    elif str(type_name) == 'phc':
+        address = DimLocation.objects.all().values_list('phc__name').distinct()
+    elif str(type_name) == 'subcenter':
+        address = DimLocation.objects.all().values_list('subcenter').distinct()
+
+    res = []
+    res.append('-------')
+    for a in address:
+        res.append(str(a[0]))
+    result = {'res':res}
+    res = json.dumps(result)
+    return HttpResponse(res)
+
+def get_villages(request):
+    if request.method == "GET":
+        village= request.GET.get('villages',"")
+        
+    elif request.method == "POST":
+        village= request.GET.get('villages',"")
+    villages = DimLocation.objects.filter(subcenter=str(village)).values_list('village')
+    res = []
+    
+    for v in villages:
+        res.append(str(v[0]))
+    result = {'res':res}
+    res = json.dumps(result)
+    return HttpResponse(res)
+
+def save_hospital(request):
+    if request.method == 'GET':
+        country = request.GET.get('country','')
+        hosname = request.GET.get('hosname','')
+        hostype = request.GET.get('hostype','')
+        address = request.GET.get('address','')
+        villages = request.GET.get('villages','')
+        parenthos = request.GET.get('parenthos','')
+        active = request.GET.get('active','')
+    elif request.method == 'POST':
+        country = request.POST.get('country','')
+        hosname = request.POST.get('hosname','')
+        hostype = request.POST.get('hostype','')
+        address = request.POST.get('address','')
+        villages = request.POST.get('villages','')
+        parenthos = request.POST.get('parenthos','')
+        active = request.POST.get('active','')
+    acti = 0
+    if str(active) == 'on':
+        acti = 1
+    hospital_details = HospitalDetails(country=str(country),hospital_name=str(hosname),hospital_type=str(hostype),parent_hospital=str(parenthos),address=str(address),village=str(villages),status=acti)
+    hospital_details.save()
+    x = {"result":'/admin/'}
+    x=json.dumps(x)
+    return HttpResponse(x)
+
+def adminadd_usermaintenance(request):
+    hosname = HospitalDetails.objects.all().values_list('hospital_name')
+    hos_name=[]
+    for x in hosname:
+        hos_name.append(x[0])
+    c = {}
+    c.update(csrf(request))
+    return render_to_response('userdetail.html',{'x':hos_name,'csrf_token':c['csrf_token']})
+
+def get_uservillage(request):
+
+    if request.method == "GET":
+        hospital_name = request.GET.get('hospital_name',"")
+    elif request.method == "POST":
+        hospital_name = request.GET.get('hospital_name',"")
+    villages = HospitalDetails.objects.filter(hospital_name=str(hospital_name)).values_list('village')
+    if len(villages) >0:
+        res = villages[0][0].split(',')
+    result = {'res':res}
+    res = json.dumps(result)
+    return HttpResponse(res)
+
+def edit_hospital(request,hospital_id):
+    global hos_id
+    hos_id = hospital_id
+    if request.method == 'GET':
+        edit_details = HospitalDetails.objects.get(id=int(hospital_id))
+    elif request.method == 'POST':
+        edit_details = HospitalDetails.objects.get(id=int(hospital_id))
+    hostype = []
+    hos_type = HospitalType.objects.all().values_list('types')
+    hostype.insert(0,edit_details.hospital_type)
+    for hospital_types in hos_type:
+        if hospital_types[0] not in hostype:
+            hostype.append(str(hospital_types[0]))
+    country=[]
+    names= CountryTb.objects.all().values_list('country_name')
+    country.insert(0,edit_details.country)
+    for country_data in names:
+        if country_data[0] not in country:
+            country.append(str(country_data[0]))
+    parent_hos =[]
+    hospital_data=HospitalDetails.objects.all().values_list('hospital_name')
+    parent_hos.insert(0,edit_details.parent_hospital)
+    for hospital in hospital_data:
+        hos_temp = hospital[0].strip()
+        if hos_temp not in parent_hos:
+            parent_hos.append(str(hos_temp))
+    villages = edit_details.village.split(',')
+
+    if str(edit_details.hospital_type) == 'district':
+        list_location = DimLocation.objects.all().values_list('district')
+    elif str(edit_details.hospital_type) == 'taluka':
+        list_location = DimLocation.objects.all().values_list('taluka')
+    elif str(edit_details.hospital_type) == 'phc':
+        list_location = DimLocation.objects.all().values_list('phc__name')
+    elif str(edit_details.hospital_type) =='subcenter':
+        list_location = DimLocation.objects.all().values_list('subcenter')
+
+    address =[]
+    address.insert(0,edit_details.address)
+    for l in list_location:
+        if l[0] not in address:
+            address.append(l[0])
+
+    c = {}
+    c.update(csrf(request))
+    return render_to_response('edithospital.html',{'edit_details':edit_details,'hostype':hostype,'country':country,'x':parent_hos,'address':address,'village':villages,'csrf_token':c['csrf_token']})
+
+def update_hospitaldetail(request):
+    global hos_id
+    if request.method == 'GET':
+        country_name= request.GET.get('country','')
+        hospitalname = request.GET.get('hosname','')
+        hospitaltype = request.GET.get('hostype','')
+        parenthospital = request.GET.get('parenthos','')
+        hos_address = request.GET.get('address','')
+        hos_village = request.GET.get('villages','')
+        active = request.GET.get('active','')
+    elif request.method == 'POST':
+        country_name= request.POST.get('country','')
+        hospitalname = request.POST.get('hosname','')
+        hospitaltype = request.POST.get('hostype','')
+        parenthospital = request.POST.get('parenthos','')
+        hos_address = request.POST.get('address','')
+        hos_village = request.POST.get('villages','')
+        active = request.POST.get('active','')
+    acti = 0
+    if str(active) == 'on':
+        acti = 1
+    edit_hospital = HospitalDetails.objects.filter(id=hos_id).update(country=str(country_name),hospital_name=str(hospitalname),hospital_type=str(hospitaltype),parent_hospital=str(parenthospital),address = str(hos_address),village=str(hos_village),status=acti)
+    x = {"result":1}
+    x=json.dumps(x)
+    return HttpResponse(x)
+    
+def save_usermaintenance(request):
+    if request.method == 'GET':
+        userrole = request.GET.get('userrole','')
+        userid = request.GET.get('userid','')
+        first_name = request.GET.get('first_name','')
+        last_name = request.GET.get('last_name','')
+        password = request.GET.get('password','')
+        mobile = request.GET.get('mobile','')
+        email = request.GET.get('email','')
+        active = request.GET.get('active','')
+        hospital = request.GET.get('hospital','')
+        village = request.GET.get('village','')
+        anc = request.GET.get('anc','')
+        pnc = request.GET.get('pnc','')
+        ec = request.GET.get('ec','')
+        fp = request.GET.get('fp','')
+        child = request.GET.get('child','')
+
+    elif request.method == 'POST':
+        userrole = request.POST.get('userrole','')
+        userid = request.POST.get('userid','')
+        first_name = request.POST.get('first_name','')
+        last_name = request.POST.get('last_name','')
+        password = request.POST.get('password','')
+        mobile = request.POST.get('mobile','')
+        email = request.POST.get('email','')
+        active = request.POST.get('active','')
+        hospital = request.POST.get('hospital','')
+        village = request.POST.get('village','')
+        anc = request.GET.get('anc','')
+        pnc = request.GET.get('pnc','')
+        ec = request.GET.get('ec','')
+        fp = request.GET.get('fp','')
+        child = request.GET.get('child','')
+       
+    acti = 0
+    pnc_active = 0
+    anc_active = 0
+    ec_active = 0
+    fp_active = 0
+    child_active = 0
+    if str(active) == 'on':
+        acti = 1
+    
+    if str(anc) == 'on':
+        anc_active = 1
+    
+    if str(pnc) == 'on':
+        pnc_active = 1
+    
+    if str(ec) == 'on':
+        ec_active = 1
+    
+    if str(fp) == 'on':
+        fp_active = 1
+    
+    if str(child) == 'on':
+        child_active = 1
+    
+    village_details = UserMaintenance(user_role=str(userrole),user_id=str(userid),firstname=str(first_name),lastname=str(last_name),password=str(password),hospital=str(hospital),village=str(village),status=acti,mobile=int(mobile),email=str(email),pnc=pnc_active,anc=anc_active,ec=ec_active,fp=fp_active,child=child_active)
+    village_details.save()
+    x = {"result":1}
+    x=json.dumps(x)
+    return HttpResponse(x)
+
+def edit_usermaintenance(request,batch_id):
+
+    global doc_id
+    doc_id = batch_id
+    details=UserMaintenance.objects.get(id=int(batch_id))
+    role = ['ANM','PHC','DOC']
+    user_role = []
+    anm = False
+    if str(details.user_role) == 'ANM':
+        anm = True
+    user_role.insert(0,details.user_role)
+    for r in role:
+        if r not in user_role:
+            user_role.append(r) 
+    hos_name =[]
+    hospital_data=HospitalDetails.objects.all().values_list('hospital_name')
+    hos_name.insert(0,details.hospital)
+    for hospital in hospital_data:
+        if hospital not in hos_name:
+            hos_name.append(str(hospital[0]))
+    villages = details.village.split(',')
+    status = details.status
+    c_status=False
+    if str(status) == 'True':
+        c_status = True
+    anc=details.anc
+    anc_status=False
+    if str(anc) == 'True':
+        anc_status = True
+    pnc=details.pnc   
+    pnc_status=False
+    if str(pnc) == 'True':
+        pnc_status = True
+    ec=details.ec
+    ec_status=False
+    if str(ec) == 'True':
+        ec_status = True
+    fp=details.fp
+    fp_status=False
+    if str(fp) == 'True':
+        fp_status = True
+    child=details.child
+    child_status=False
+    if str(child) == 'True':
+        child_status = True
+    c = {}
+    c.update(csrf(request))
+    return render_to_response('edituserdetails.html',{'y':details,'user_role':user_role,'village':villages,'hospital':hos_name,'status':c_status,'anc':anc_status,'pnc':pnc_status,'ec':ec_status,'fp':fp_status,'child':child_status,'anm':anm,'csrf_token':c['csrf_token']})
+
+
+def  update_usermaintenance(request):
+    global doc_id
+    if request.method == 'GET':
+        userrole = request.GET.get('userrole','')
+        userid = request.GET.get('userid','')
+        first_name = request.GET.get('first_name','')
+        last_name = request.GET.get('last_name','')
+        password = request.GET.get('password','')
+        mobile = request.GET.get('mobile','')
+        email = request.GET.get('email','')
+        active = request.GET.get('active','')
+        hospital = request.GET.get('hospital','')
+        village = request.GET.get('village','')
+        anc = request.GET.get('anc','')
+        pnc = request.GET.get('pnc','')
+        ec = request.GET.get('ec','')
+        fp = request.GET.get('fp','')
+        child = request.GET.get('child','')
+
+    elif request.method == 'POST':
+        userrole = request.POST.get('userrole','')
+        userid = request.POST.get('userid','')
+        first_name = request.POST.get('first_name','')
+        last_name = request.POST.get('last_name','')
+        password = request.POST.get('password','')
+        mobile = request.POST.get('mobile','')
+        email = request.POST.get('email','')
+        active = request.POST.get('active','')
+        hospital = request.POST.get('hospital','')
+        village = request.POST.get('village','')
+        anc = request.GET.get('anc','')
+        pnc = request.GET.get('pnc','')
+        ec = request.GET.get('ec','')
+        fp = request.GET.get('fp','')
+        child = request.GET.get('child','')
+
+    acti = 0
+    pnc_active = 0
+    anc_active = 0
+    ec_active = 0
+    fp_active = 0
+    child_active = 0
+    if str(active) == 'on':
+        acti = 1
+    
+    if str(anc) == 'on':
+        anc_active = 1
+    
+    if str(pnc) == 'on':
+        pnc_active = 1
+    
+    if str(ec) == 'on':
+        ec_active = 1
+    
+    if str(fp) == 'on':
+        fp_active = 1
+    
+    if str(child) == 'on':
+        child_active = 1
+
+    edit_details = UserMaintenance.objects.filter(id=doc_id).update(user_role=str(userrole),user_id=str(userid),firstname=str(first_name),lastname=str(last_name),password=str(password),hospital=str(hospital),village=str(village),status=acti,mobile=int(mobile),email=str(email),pnc=pnc_active,anc=anc_active,ec=ec_active,fp=fp_active,child=child_active)
+    x = {"result":1}
+    x=json.dumps(x)
+    return HttpResponse(x)

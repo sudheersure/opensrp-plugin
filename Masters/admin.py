@@ -2,7 +2,10 @@ from django.contrib import admin
 from Masters.models import *
 from django.http import HttpResponse
 from Masters.forms import *
-
+from django.conf.urls import patterns, url
+from django.shortcuts import render_to_response, redirect, get_object_or_404
+from django.shortcuts import render
+from collections import defaultdict
 
 class DimAnmAdmin(admin.ModelAdmin):
     list_display = ('anmidentifier','phc','subcenter','name',)
@@ -213,8 +216,60 @@ class DocInfoAdmin(admin.ModelAdmin):
     def has_delete_permission(self, request, obj=None):
         return False
         
+class HospitalDetailsAdmin(admin.ModelAdmin):
+    list_display = ('country','hospital_name','hospital_type','parent_hospital','address','village','status',)
 
-admin.site.register(DimAnm,DimAnmAdmin)
+    def get_urls(self):
+        urls = super(HospitalDetailsAdmin, self).get_urls()
+        my_urls = patterns('',
+                url(r'add/$', 'Masters.views.admin_hospital',name='hospital'),
+                url(r'gettype/$', 'Masters.views.get_hospital',name='hospital'),
+                url(r'(?P<hospital_id>\d+)/$', 'Masters.views.edit_hospital',name='edithospital'),
+                )
+        return my_urls + urls
+
+    def get_actions(self, request):
+        actions = super(HospitalDetailsAdmin, self).get_actions(request)
+        del actions['delete_selected']
+        return actions
+
+    def has_delete_permission(self, request, obj=None):
+        return False
+
+class UserMaintenanceAdmin(admin.ModelAdmin):
+    form = UserMaintenaceForm
+    list_display = ('user_id','user_role','firstname','lastname','hospital','mobile','email','village','status',)
+
+    def get_urls(self):
+        urls = super(UserMaintenanceAdmin, self).get_urls()
+        my_urls = patterns('',
+                url(r'add/$', 'Masters.views.adminadd_usermaintenance',name='user_maintenance'),
+                
+
+                url(r'(?P<batch_id>\d+)/$','Masters.views.edit_usermaintenance',name='editusermaintenance'),
+                )
+        return my_urls + urls
+
+    def get_actions(self, request):
+        actions = super(UserMaintenanceAdmin, self).get_actions(request)
+        del actions['delete_selected']
+        return actions
+
+    def has_delete_permission(self, request, obj=None):
+        return False
+
+class CountryAdmin(admin.ModelAdmin):
+    list_display=('country_name',)
+
+    def get_actions(self, request):
+        actions = super(CountryAdmin, self).get_actions(request)
+        del actions['delete_selected']
+        return actions
+
+    def has_delete_permission(self, request, obj=None):
+        return False
+
+#admin.site.register(DimAnm,DimAnmAdmin)
 admin.site.register(DimIndicator,DimIndicatorAdmin)
 admin.site.register(DimLocation,DimLocationAdmin)
 admin.site.register(DimPhc,DimPhcAdmin)
@@ -229,3 +284,6 @@ admin.site.register(ICD10,ICD10Admin)
 admin.site.register(Investigations,InvestigationAdmin)
 admin.site.register(PocInfo,PocInfoAdmin)
 admin.site.register(DocInfo,DocInfoAdmin)
+admin.site.register(HospitalDetails,HospitalDetailsAdmin)
+admin.site.register(UserMaintenance,UserMaintenanceAdmin)
+admin.site.register(CountryTb,CountryAdmin)
