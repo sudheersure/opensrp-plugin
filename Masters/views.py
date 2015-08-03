@@ -129,183 +129,182 @@ def poc_update(request):
 
 
 def doctor_data(request):
-    ''' Method to show all pending cases on doctor home screen with patient details'''
     if request.method == "GET":
         doc_name= request.GET.get('docname',"")
         password = request.GET.get('pwd',"")
     elif request.method == "POST":
-        doc_name= request.GET.get('docname',"")
-        password = request.GET.get('pwd',"")
+        doc_name= request.POST.get('docname',"")
+        password = request.POST.get('pwd',"")
     end_res = '{}'
-    doc_phc = str(DocInfo.objects.filter(docname=str(doc_name)).values_list('phc__name')[0][0])
     doc_pwd = hashlib.sha1()
     doc_pwd.update(password)
-    doc_password = doc_pwd.hexdigest()
-    user_pwd_db = DimUserLogin.objects.filter(name=str(doc_name)).values_list('password')
+    password = doc_pwd.hexdigest()
     resultdata=defaultdict(list)
     display_result=[]
-    entity_list = PocInfo.objects.filter(phc=doc_phc).values_list('visitentityid','entityidec','pending','docid').distinct()
-
-    #If no record availble for doctor screen display
+    user_pwd_db = UserMaintenance.objects.filter(user_id=str(doc_name)).values_list('password')
+    if str(user_pwd_db[0][0]) != str(password):
+        return HttpResponse(json.dumps({'result':'Invalid username/password'}))
+    user_details=UserMaintenance.objects.filter(user_id=str(doc_name),password=str(password)).values_list('user_role','hospital','firstname','lastname','id')
+    user_hospital = user_details[0][1]
+    hospital_address = HospitalDetails.objects.filter(hospital_name=str(user_hospital)).values_list('address')[0][0]
+    entity_list = PocInfo.objects.filter(phc=str(hospital_address)).values_list('visitentityid','entityidec','pending','docid').distinct()
     if len(entity_list) == 0:
     	return HttpResponse(json.dumps(display_result))
-
-    #Iterating all pending cases to display over doctor home screen
     for entity in entity_list:
         if str(entity[2])!='None':
             if len(entity[2])>1 and str(doc_name) != str(entity[3]):
                 continue
     	entity_detail_id=str(entity[1])
-        #Curl command to read visit related data
-        ancvisit_detail="curl -s -H -X GET http://202.153.34.169:5984/drishti-form/_design/FormSubmission/_view/by_EntityId?key=%22"+str(entity[0])+"%22"
+        ancvisit_detail="curl -s -H -X GET http://202.153.34.169:5984/drishti-form/_design/FormSubmission/_view/by_EntityId?key=%22"+str(entity[0])+"%22&descending=true"
         visit_output = commands.getoutput(ancvisit_detail)
         visit_data1 = json.loads(visit_output)
         row = visit_data1['rows']
         visit_data=[]
         poc_len=1
         doc_con='no'
-        for i in range(len(row)):
-            visit={}
-            newvisitdata=defaultdict(list)
-            newvisit={}
-            field_data = row[i]['value'][1]['form']['fields']
-            for f in range((len(field_data)-1),-1,-1):
-                fd = field_data[f]
-                if 'name' in fd.keys():
-                    if fd['name'] == 'docPocInfo':
-                        poc_len=len(fd['value'])
-                    elif fd['name'] == 'isConsultDoctor':
-                        doc_con = fd['value']
-            #Check if record is recommended for doctor consultation
-            if doc_con == 'yes':
-                #-----------------PNC DATA --------------
-                if row[i]['value'][0] == 'pnc_visit':
-                    doc_id=row[i]['id']
-                    for visitdata in row[i]['value'][1]['form']['fields']:
-                        key = visitdata.get('name')
-                        if 'value' in visitdata.keys(): 
-                            value = visitdata.get('value')
-                        else:
-                        	value=''
-                        if key == 'pncNumber':
-                            visit['pncNumber']=value
-                        elif key=='pncVisitDate':
-                            visit['pncVisitDate']=value
-                        elif key == 'difficulties1':
-                            visit['difficulties1']=value
-                        elif key == 'difficulties2':
-                            visit['difficulties2']=value
-                        elif key == 'abdominalProblems':
-                            visit['abdominalProblems']=value
-                        elif key == 'urineStoolProblems':
-                            visit['urineStoolProblems']=value
-                        elif key == 'hasFeverSymptoms':
-                            visit['hasFeverSymptoms']=value    
-                        elif key == 'breastProblems':
-                            visit['breastProblems']=value
-                        elif key == 'vaginalProblems':
-                            visit['vaginalProblems']=value
-                        elif key == 'bpSystolic':
-                            visit['bpSystolic']=value
-                        elif key == 'bpDiastolic':
-                            visit['bpDiastolic']=value
-                        elif key == 'temperature':
-                            visit['temperature']=value
-                        elif key == 'pulseRate':
-                            visit['pulseRate']=value
-                        elif key == 'bloodGlucoseData':
-                            visit['bloodGlucoseData']=value
-                        elif key == 'weight':
-                            visit['weight']=value
-                        elif key == 'pncVisitPlace':
-                        	visit['pncVisitPlace']=value
-                        elif key == 'pncVisitDate':
-                        	visit['pncVisitDate']=value                        	
-                        elif key == 'isHighRisk':
-                        	visit['isHighRisk']=value
-                        elif key == 'hbLevel':
-                            visit['Hblevel']=value
-                            visit['visit_type'] = 'PNC'
-                        visit["entityid"] = entity[0]
-                        visit['id']=doc_id 
-                    visit_data.append(visit)
+        doctor_visit_data = row[-1]['value']
+        visit={}
 
-                elif row[i]['value'][0] == 'anc_visit': 
-                    doc_id=row[i]['id']
-                    for visitdata in row[i]['value'][1]['form']['fields']:
-                        key = visitdata.get('name') 
-                        if 'value' in visitdata.keys(): 
-                            value = visitdata.get('value')
-                        else:
-                        	value=''
-                        if key == 'ancVisitNumber':
-                            visit['ancVisitNumber']=value
-                        elif key == 'ancNumber':
-                            visit['ancNumber']=value                            
-                        elif key == 'ancVisitPerson':
-                            visit['ancVisitPerson']=value
-                        elif key=='ancVisitDate':
-                            visit['ancVisitDate']=value
-                        elif key == 'riskObservedDuringANC':
-                            visit['riskObservedDuringANC']=value
-                        elif key == 'bpSystolic':
-                            visit['bpSystolic']=value
-                        elif key == 'bpDiastolic':
-                            visit['bpDiastolic']=value
-                        elif key == 'temperature':
-                            visit['temperature']=value
-                        elif key == 'pulseRate':
-                            visit['pulseRate']=value
-                        elif key == 'bloodGlucoseData':
-                            visit['bloodGlucoseData']=value
-                        elif key == 'weight':
-                            visit['weight']=value
-                        elif key == 'fetalData':
-                            visit['fetalData']=value
-                            visit['visit_type'] = 'ANC'
+        newvisitdata=defaultdict(list)
+        newvisit={}
+
+        field_data = row[-1]['value'][1]['form']['fields']
+        for f in range((len(field_data)-1),-1,-1):
+            fd = field_data[f]
+            if 'name' in fd.keys():
+                if fd['name'] == 'docPocInfo':
+                    poc_len=len(fd['value'])
+                elif fd['name'] == 'isConsultDoctor':
+                    doc_con = fd['value']
+        if doc_con == 'yes':
+            #-----------------PNC DATA --------------
+            if row[-1]['value'][0] == 'pnc_visit':
+                doc_id=row[-1]['id']
+                for visitdata in row[-1]['value'][1]['form']['fields']:
+
+                    key = visitdata.get('name')
+                    if 'value' in visitdata.keys():
+                        value = visitdata.get('value')
+                    else:
+                        value=''
+                    if key == 'pncNumber':
+                        visit['pncNumber']=value
+                    elif key=='pncVisitDate':
+                        visit['pncVisitDate']=value
+                    elif key == 'difficulties1':
+                        visit['difficulties1']=value
+                    elif key == 'difficulties2':
+                        visit['difficulties2']=value
+                    elif key == 'abdominalProblems':
+                        visit['abdominalProblems']=value
+                    elif key == 'urineStoolProblems':
+                        visit['urineStoolProblems']=value
+                    elif key == 'hasFeverSymptoms':
+                        visit['hasFeverSymptoms']=value
+                    elif key == 'breastProblems':
+                        visit['breastProblems']=value
+                    elif key == 'vaginalProblems':
+                        visit['vaginalProblems']=value
+                    elif key == 'bpSystolic':
+                        visit['bpSystolic']=value
+                    elif key == 'bpDiastolic':
+                        visit['bpDiastolic']=value
+                    elif key == 'temperature':
+                        visit['temperature']=value
+                    elif key == 'pulseRate':
+                        visit['pulseRate']=value
+                    elif key == 'bloodGlucoseData':
+                        visit['bloodGlucoseData']=value
+                    elif key == 'weight':
+                        visit['weight']=value
+                    elif key == 'pncVisitPlace':
+                        visit['pncVisitPlace']=value
+                    elif key == 'pncVisitDate':
+                        visit['pncVisitDate']=value
+                    elif key == 'isHighRisk':
+                        visit['isHighRisk']=value
+                    elif key == 'hbLevel':
+                        visit['Hblevel']=value
+                        visit['visit_type'] = 'PNC'
+                    visit["entityid"] = entity[0]
+                    visit['id']=doc_id
+                visit_data.append(visit)
+
+            elif row[-1]['value'][0] == 'anc_visit':
+                doc_id=row[-1]['id']
+                for visitdata in row[-1]['value'][1]['form']['fields']:
+                    key = visitdata.get('name')
+                    if 'value' in visitdata.keys():
+                        value = visitdata.get('value')
+                    else:
+                        value=''
+                    if key == 'ancVisitNumber':
+                        visit['ancVisitNumber']=value
+                    elif key == 'ancNumber':
+                        visit['ancNumber']=value
+                    elif key == 'ancVisitPerson':
+                        visit['ancVisitPerson']=value
+                    elif key=='ancVisitDate':
+                        visit['ancVisitDate']=value
+                    elif key == 'riskObservedDuringANC':
+                        visit['riskObservedDuringANC']=value
+                    elif key == 'bpSystolic':
+                        visit['bpSystolic']=value
+                    elif key == 'bpDiastolic':
+                        visit['bpDiastolic']=value
+                    elif key == 'temperature':
+                        visit['temperature']=value
+                    elif key == 'pulseRate':
+                        visit['pulseRate']=value
+                    elif key == 'bloodGlucoseData':
+                        visit['bloodGlucoseData']=value
+                    elif key == 'weight':
+                        visit['weight']=value
+                    elif key == 'fetalData':
+                        visit['fetalData']=value
+                        visit['visit_type'] = 'ANC'
+                    visit["entityid"] = entity[0]
+                    visit['id']=doc_id
+                visit_data.append(visit)
+            elif row[-1]['value'][0] == 'child_illness':
+                doc_id=row[-1]['id']
+                for childdata in row[-1]['value'][1]['form']['fields']:
+                    key = childdata.get('name')
+                    if 'value' in childdata.keys():
+                        value = childdata.get('value')
+                    else:
+                        value=''
+                    if key =='dateOfBirth':
+                        visit['dateOfBirth']=value
+                        age = datetime.datetime.today()-datetime.datetime.strptime(str(value),"%Y-%m-%d")
+                        visit['age']=age.days
+                        visit['visit_type'] = 'CHILD'
+                    elif key == 'childSigns':
+                        visit['childSigns']=value
+                    elif key =='childSignsOther':
+                        visit['childSignsOther']=value
+                    elif key =='immediateReferral':
+                        visit['immediateReferral']=value
+                    elif key =='immediateReferralReason':
+                        visit['immediateReferralReason']=value
+                    elif key =='reportChildDisease':
+                        visit['reportChildDisease']=value
+                    elif key =='reportChildDiseaseOther':
+                        visit['reportChildDiseaseOther']=value
+                    elif key =='reportChildDiseaseDate':
+                        visit['reportChildDiseaseDate']=value
+                    elif key =='reportChildDiseasePlace':
+                        visit['reportChildDiseasePlace']=value
+                    elif key =='numberOfORSGiven':
+                        visit['numberOfORSGiven']=value
+                    elif key =='childReferral':
+                        visit['childReferral']=value
+                    elif key =='submissionDate':
+                        visit['submissionDate']=value
+                    elif key == 'id':
+                        visit['id']=doc_id
                         visit["entityid"] = entity[0]
-                        visit['id']=doc_id   
-                    visit_data.append(visit)
-                elif row[i]['value'][0] == 'child_illness':
-                    doc_id=row[i]['id']
-                    for childdata in row[i]['value'][1]['form']['fields']:
-                        key = childdata.get('name') 
-                        if 'value' in childdata.keys(): 
-                            value = childdata.get('value')
-                        else:
-                        	value=''
-                        if key =='dateOfBirth':
-                        	visit['dateOfBirth']=value
-                        	age = datetime.datetime.today()-datetime.datetime.strptime(str(value),"%Y-%m-%d")
-                        	visit['age']=age.days
-                        	visit['visit_type'] = 'CHILD'
-                        elif key == 'childSigns':
-                        	visit['childSigns']=value
-                        elif key =='childSignsOther':
-                        	visit['childSignsOther']=value
-                        elif key =='immediateReferral':
-                        	visit['immediateReferral']=value
-                        elif key =='immediateReferralReason':
-                        	visit['immediateReferralReason']=value
-                        elif key =='reportChildDisease':
-                        	visit['reportChildDisease']=value
-                        elif key =='reportChildDiseaseOther':
-                        	visit['reportChildDiseaseOther']=value
-                        elif key =='reportChildDiseaseDate':
-                        	visit['reportChildDiseaseDate']=value
-                        elif key =='reportChildDiseasePlace':
-                        	visit['reportChildDiseasePlace']=value
-                        elif key =='numberOfORSGiven':
-                        	visit['numberOfORSGiven']=value
-                        elif key =='childReferral':
-                        	visit['childReferral']=value
-                        elif key =='submissionDate':
-                        	visit['submissionDate']=value
-                        elif key == 'id':
-                        	visit['id']=doc_id
-                        	visit["entityid"] = entity[0]
-                    visit_data.append(visit)
-        #CURL command to read registration related info
+                visit_data.append(visit)
         entity_detail="curl -s -H -X GET http://202.153.34.169:5984/drishti-form/_design/FormSubmission/_view/by_EntityId?key=%22"+entity_detail_id+"%22"
         poc_output=commands.getoutput(entity_detail)
         poutput=json.loads(poc_output)
@@ -728,3 +727,96 @@ def  update_usermaintenance(request):
     x = {"result":1}
     x=json.dumps(x)
     return HttpResponse(x)
+
+def user_auth(request):
+    if request.method == 'GET':
+        username = str(request.GET.get('userid',''))
+        password = str(request.GET.get('pwd',''))
+    else:
+        username = str(request.POST.get('userid',''))
+        password = str(request.POST.get('pwd',''))
+    pwd = hashlib.sha1()
+    pwd.update(password)
+    password = pwd.hexdigest()
+    user_details=UserMaintenance.objects.filter(user_id=username,password=password).values_list('user_role','hospital','firstname','lastname','id')
+    if len(user_details) ==0:
+        return HttpResponse('{"status":"Invalid username/password"}')
+    user_role=user_details[0][0]
+    user_data = {}
+    personal_info ={}
+    personal_info['name']=str(user_details[0][2]+' '+str(user_details[0][3]))
+    user_hospital = user_details[0][1]
+    personal_info["hospital"] = str(user_hospital)
+    user_data["personal_info"]=str(personal_info)
+    user_data["role"] = str(user_role)
+    if user_role.upper() =='DOC':
+        hospital_address = HospitalDetails.objects.filter(hospital_name=str(user_hospital)).values_list('address')[0][0]
+        user_data["doc_info"] = doctor_data(hospital_address,username)
+
+    elif user_role.upper() == 'ANM':
+        user_status = UserMaintenance.objects.get(id=int(user_details[0][4]))
+        hospital_address = HospitalDetails.objects.filter(hospital_name=str(user_hospital)).values_list('address')[0][0]
+        location_details = DimLocation.objects.filter(subcenter=str(hospital_address)).values_list('district','taluka','phc__name')
+        anm_location={}
+        anm_location["district"]=str(location_details[0][0])
+        anm_location["taluka"]=str(location_details[0][1])
+        anm_location["phc"]=str(location_details[0][2])
+        village = user_status.village
+        registration=[]
+        if str(user_status.anc) == 'True':
+            registration.append('anc')
+        if str(user_status.pnc) == 'True':
+            registration.append('pnc')
+        if str(user_status.ec) == 'True':
+            registration.append('ec')
+        if str(user_status.fp) == 'True':
+            registration.append('fp')
+        if str(user_status.child) == 'True':
+            registration.append('child')
+        anm_location["villages"]= village.split(',')
+        anm_location["registration"]=str(registration)
+        user_data["anm_info"]=str(anm_location)
+    end_res= json.dumps(user_data)
+    return HttpResponse(end_res)
+
+def vitals_data(request):
+    vital_readings=[]
+    if request.method == 'GET':
+        visitid = request.GET.get('visit','')
+    else:
+        visitid = request.POST.get('visit','')
+    ancvisit_detail="curl -s -H -X GET http://202.153.34.169:5984/drishti-form/_design/FormSubmission/_view/by_EntityId?key=%22"+str(visitid)+"%22&descending=True"
+    print ancvisit_detail
+    visit_output = commands.getoutput(ancvisit_detail)
+    visit_data = json.loads(visit_output)
+    visit_details = visit_data['rows']
+    for visit in visit_details:
+        visit_reading={}
+        if visit['value'][0] == 'anc_visit':
+            required_values= ['ancVisitNumber','ancVisitDate','bpSystolic','bpDiastolic','temperature','fetalData','bloodGlucoseData']
+            fetched_dict = copyf(visit['value'][1]['form']['fields'],'name',required_values)
+            visit_reading["visit_type"]="ANC"
+            visit_reading["visit_number"]= copyf(fetched_dict,'name','ancVisitNumber')[0].get('value','0')
+            visit_reading["bpSystolic"]= copyf(fetched_dict,'name','bpSystolic')[0].get('value','0')
+            visit_reading["bpDiastolic"]= copyf(fetched_dict,'name','bpDiastolic')[0].get('value','0')
+            visit_reading["ancVisitDate"]= copyf(fetched_dict,'name','ancVisitDate')[0].get('value','0')
+            visit_reading["temperature"]= copyf(fetched_dict,'name','temperature')[0].get('value','0')
+            visit_reading["fetalData"]= copyf(fetched_dict,'name','fetalData')[0].get('value','0')
+            visit_reading["bloodGlucoseData"]= copyf(fetched_dict,'name','bloodGlucoseData')[0].get('value','0')
+            vital_readings.append(visit_reading)
+        elif visit['value'][0] == 'pnc_visit':
+            required_values= ['pncVisitDate','bpSystolic','bpDiastolic','temperature','fetalData','bloodGlucoseData']
+            fetched_dict = copyf(visit['value'][1]['form']['fields'],'name',required_values)
+            visit_reading["visit_type"]="PNC"
+            visit_reading["bpSystolic"]= copyf(fetched_dict,'name','bpSystolic')[0].get('value','0')
+            visit_reading["bpDiastolic"]= copyf(fetched_dict,'name','bpDiastolic')[0].get('value','0')
+            visit_reading["pncVisitDate"]= copyf(fetched_dict,'name','pncVisitDate')[0].get('value','0')
+            visit_reading["temperature"]= copyf(fetched_dict,'name','temperature')[0].get('value','0')
+            visit_reading["fetalData"]= copyf(fetched_dict,'name','fetalData')[0].get('value','0')
+            visit_reading["bloodGlucoseData"]= copyf(fetched_dict,'name','bloodGlucoseData')[0].get('value','0')
+            vital_readings.append(visit_reading)
+    return HttpResponse(json.dumps(vital_readings))
+
+def copyf(dictlist, key, valuelist):
+      return [dictio for dictio in dictlist if dictio[key] in valuelist]
+

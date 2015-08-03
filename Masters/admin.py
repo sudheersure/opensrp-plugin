@@ -35,7 +35,7 @@ class DimIndicatorAdmin(admin.ModelAdmin):
 
 class DimLocationAdmin(admin.ModelAdmin):
     list_display = ('village','subcenter','phc','taluka','district','state',)
-    search_fields = ('village','subcenter','phc__name','taluka','district','state','active',)
+    search_fields = ('village','subcenter','phc__name','taluka','district','state',)
     list_filter = ('village','subcenter',)
 
     def get_actions(self, request):
@@ -191,8 +191,8 @@ class InvestigationAdmin(admin.ModelAdmin):
         return False
 
 class PocInfoAdmin(admin.ModelAdmin):    
-    list_display = ('visitentityid','entityidec','anmid','level','clientversion','serverversion','visittype','phc','active',)
-    search_fields = ('visitentityid','entityidec','anmid','level','clientversion','serverversion','visittype','phc','active',)
+    list_display = ('visitentityid','entityidec','anmid','level','clientversion','serverversion','visittype','phc','pending','docid',)
+    search_fields = ('visitentityid','entityidec','anmid','level','clientversion','serverversion','visittype','phc','pending','docid',)
     list_filter = ('anmid','level','clientversion','serverversion','phc')
 
     def get_actions(self, request):
@@ -270,12 +270,12 @@ class CountryAdmin(admin.ModelAdmin):
         return False
 
 #admin.site.register(DimAnm,DimAnmAdmin)
-admin.site.register(DimIndicator,DimIndicatorAdmin)
+#admin.site.register(DimIndicator,DimIndicatorAdmin)
 admin.site.register(DimLocation,DimLocationAdmin)
 admin.site.register(DimPhc,DimPhcAdmin)
-admin.site.register(DimServiceProvider,DimServiceProviderAdmin)
-admin.site.register(DimServiceProviderType,DimServiceProviderTypeAdmin)
-admin.site.register(DimUserLogin,DimUserLoginAdmin)
+#admin.site.register(DimServiceProvider,DimServiceProviderAdmin)
+#admin.site.register(DimServiceProviderType,DimServiceProviderTypeAdmin)
+#admin.site.register(DimUserLogin,DimUserLoginAdmin)
 admin.site.register(DrugInfo,DrugInfoAdmin)
 admin.site.register(Frequency,FrequencyAdmin)
 admin.site.register(Dosage,DosageAdmin)
@@ -283,7 +283,7 @@ admin.site.register(Directions,DirectionsAdmin)
 admin.site.register(ICD10,ICD10Admin)
 admin.site.register(Investigations,InvestigationAdmin)
 admin.site.register(PocInfo,PocInfoAdmin)
-admin.site.register(DocInfo,DocInfoAdmin)
+#admin.site.register(DocInfo,DocInfoAdmin)
 admin.site.register(HospitalDetails,HospitalDetailsAdmin)
 admin.site.register(UserMaintenance,UserMaintenanceAdmin)
 admin.site.register(CountryTb,CountryAdmin)

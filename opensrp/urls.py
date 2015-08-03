@@ -15,5 +15,7 @@ urlpatterns = patterns('',
     url(r'^saveusermaintenance/$', 'Masters.views.save_usermaintenance',name='saveusermaintenance'),
     url(r'^updateusermaintenance/$', 'Masters.views.update_usermaintenance',name='editusermaintenance'),
     url(r'^updatehospital/$', 'Masters.views.update_hospitaldetail',name='edithospitals'),
+    url(r'^auth/$', 'Masters.views.user_auth',name='userauth'),
+    url(r'^vitalsdata/$', 'Masters.views.vitals_data',name='vitals_data'),
 
 )
