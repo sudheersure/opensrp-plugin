@@ -66,7 +66,6 @@ class DimLocation(models.Model):
     taluka = models.CharField(max_length=100)
     district = models.CharField(max_length=100)
     state = models.CharField(max_length=100)
-    active = models.BooleanField(default=True)
 
     class Meta:
         managed = False
@@ -87,7 +86,6 @@ class DimPhc(models.Model):
     #id = models.IntegerField(primary_key=True)  # AutoField?
     phcidentifier = models.CharField(unique=True, max_length=100)
     name = models.CharField(max_length=100)
-    active = models.BooleanField(default=True)
 
     class Meta:
         managed = False
@@ -478,7 +476,8 @@ class PocInfo(models.Model):
     serverversion = models.CharField(max_length=35)
     visittype = models.CharField(max_length=35)
     phc = models.CharField(max_length=100)
-    active = models.BooleanField(default=True)
+    pending = models.CharField(max_length=300, blank=True)
+    docid = models.CharField(max_length=50, blank=True)
 
     class Meta:
         managed = False
