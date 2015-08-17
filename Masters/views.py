@@ -70,20 +70,9 @@ def poc_update(request):
     poc_data = {}
     poc_data['pending']=pending
     poc_data['poc'] = str(poc_info)
-    poc.append(poc_data)
-    poc_backup = json.dumps(poc)
-
-    #Adding poc and related doctor to backup table helpful for history
-    add_poc_backup = PocBackup(visitentityid=str(visit_info[0][0]),entityidec=str(visit_info[0][1]),docid=str(docid),poc=poc_backup)
-    add_poc_backup.save()
-
-    #Getting old poc value give to patient
-    visit_backup = PocBackup.objects.filter(visitentityid=str(visitid),entityidec=str(entityid)).values_list('poc','id')
-    if len(visit_backup)>0:
-    	for visit in visit_backup:
-            old_poc= json.loads(visit[0][0])
-            poc.append(old_poc)
-
+    poc_backup_data = json.dumps(poc_data)
+    poc_backup = PocBackup(visitentityid=str(visitid),entityidec=str(entityid),docid=str(docid),poc=poc_backup_data)
+    poc_backup.save()
     #Reading all values from document
     result = {}
     entity_detail="curl -s -H -X GET http://202.153.34.169:5984/drishti-form/_design/FormSubmission/_view/by_id/?key=%22"+str(document_id)+"%22"
@@ -96,11 +85,10 @@ def poc_update(request):
         row = row_data[i]
         if 'name' in row.keys():
             if str(row['name']) == 'docPocInfo':
-                old_poc = json.loads(row['value'])
-                if len(old_poc)==0:
-                    poc_json = json.dumps(poc)
-                    row['value']=poc_json
-                    row_data[i]=row
+                poc.append(poc_data)
+                poc_json = json.dumps(poc)
+                row['value']=poc_json
+                row_data[i]=row
     #Creating new document with latest docPocInfo
     result["_id"]=str(form_ins["_id"])
     result["_rev"]=str(form_ins["_rev"])
@@ -119,35 +107,30 @@ def poc_update(request):
 
     if len(pending)>0:
         update_poc=PocInfo.objects.filter(visitentityid=str(visitid),entityidec=str(entityid)).update(pending=str(pending),docid=str(docid))
-
     #Updating backup table with latest poc/pending status info
     visit_info = PocInfo.objects.filter(visitentityid=str(visitid),entityidec=str(entityid)).values_list('visitentityid','entityidec')
     if len(pending)==0:
-        #Removing record provided POC
         del_poc = PocInfo.objects.filter(visitentityid=str(visitid),entityidec=str(entityid)).delete()
     return HttpResponse(json.dumps({"status":"success"}))
-
 
 def doctor_data(request):
     if request.method == "GET":
         doc_name= request.GET.get('docname',"")
         password = request.GET.get('pwd',"")
     elif request.method == "POST":
-        doc_name= request.POST.get('docname',"")
-        password = request.POST.get('pwd',"")
+        doc_name= request.GET.get('docname',"")
+        password = request.GET.get('pwd',"")
     end_res = '{}'
+    doc_phc = str(DocInfo.objects.filter(docname=str(doc_name)).values_list('phc__name')[0][0])
     doc_pwd = hashlib.sha1()
     doc_pwd.update(password)
-    password = doc_pwd.hexdigest()
+    doc_password = doc_pwd.hexdigest()
+    user_pwd_db = DimUserLogin.objects.filter(name=str(doc_name)).values_list('password')
+    if str(user_pwd_db[0][0]) != str(doc_password):
+        return HttpResponse(json.dumps({'result':'Invalid username/password'}))
     resultdata=defaultdict(list)
     display_result=[]
-    user_pwd_db = UserMaintenance.objects.filter(user_id=str(doc_name)).values_list('password')
-    if str(user_pwd_db[0][0]) != str(password):
-        return HttpResponse(json.dumps({'result':'Invalid username/password'}))
-    user_details=UserMaintenance.objects.filter(user_id=str(doc_name),password=str(password)).values_list('user_role','hospital','firstname','lastname','id')
-    user_hospital = user_details[0][1]
-    hospital_address = HospitalDetails.objects.filter(hospital_name=str(user_hospital)).values_list('address')[0][0]
-    entity_list = PocInfo.objects.filter(phc=str(hospital_address)).values_list('visitentityid','entityidec','pending','docid').distinct()
+    entity_list = PocInfo.objects.filter(phc=doc_phc).values_list('visitentityid','entityidec','pending','docid').distinct()
     if len(entity_list) == 0:
     	return HttpResponse(json.dumps(display_result))
     for entity in entity_list:
@@ -155,7 +138,7 @@ def doctor_data(request):
             if len(entity[2])>1 and str(doc_name) != str(entity[3]):
                 continue
     	entity_detail_id=str(entity[1])
-        ancvisit_detail="curl -s -H -X GET http://202.153.34.169:5984/drishti-form/_design/FormSubmission/_view/by_EntityId?key=%22"+str(entity[0])+"%22&descending=true"
+        ancvisit_detail="curl -s -H -X GET http://202.153.34.169:5984/drishti-form/_design/FormSubmission/_view/by_EntityId?key=%22"+str(entity[0])+"%22"
         visit_output = commands.getoutput(ancvisit_detail)
         visit_data1 = json.loads(visit_output)
         row = visit_data1['rows']
@@ -348,8 +331,8 @@ def doctor_data(request):
                         visit['edd']=value
             elif row1[0]['value'][0] == "child_registration_oa":
             	for child_data in row1[0]["value"][1]['form']['fields']:
-                    key = child_data.get('name') 
-                    if 'value' in child_data.keys(): 
+                    key = child_data.get('name')
+                    if 'value' in child_data.keys():
                         value = child_data.get('value')
                     else:
                         value=''
@@ -369,24 +352,29 @@ def doctor_data(request):
                         temp={}
                         temp={key:value}
                         result.update(temp)
+            elif row1[0]['value'][0] == "anc_close" or row1[0]['value'][0] == "pnc_close":
+                continue
             temp_list=[]
             temp_list.append(visit_data[-1])
             result["riskinfo"]=temp_list
             result["entityidec"] = entity_detail_id
             result["anmId"] = row1[0]['value'][2]
+            result["pending"] = str(entity[2])
             display_result.append(result)
         end_res= json.dumps(display_result)
     return HttpResponse(end_res)
 
 def admin_hospital(request):
-    hosname = HospitalDetails.objects.all().values_list('hospital_name')
-    hos_name=[]
-    for x in hosname:
-        hos_name.append(x[0])
+    countryname = CountryTb.objects.all().values_list('country_name')
+
+    country_name=[]
+    country_name.insert(0,'--------')
+    for n in countryname:
+        country_name.append(n[0])
     
     c = {}
     c.update(csrf(request))
-    return render_to_response('hospital.html',{'x':hos_name,'csrf_token':c['csrf_token']})
+    return render_to_response('addhospital1.html',{'x':country_name,'csrf_token':c['csrf_token']})
 
 def get_hospital(request):
     if request.method == "GET":
@@ -786,7 +774,6 @@ def vitals_data(request):
     else:
         visitid = request.POST.get('visit','')
     ancvisit_detail="curl -s -H -X GET http://202.153.34.169:5984/drishti-form/_design/FormSubmission/_view/by_EntityId?key=%22"+str(visitid)+"%22&descending=True"
-    print ancvisit_detail
     visit_output = commands.getoutput(ancvisit_detail)
     visit_data = json.loads(visit_output)
     visit_details = visit_data['rows']
@@ -820,3 +807,391 @@ def vitals_data(request):
 def copyf(dictlist, key, valuelist):
       return [dictio for dictio in dictlist if dictio[key] in valuelist]
 
+def doctor_history(request):
+    if request.method == 'GET':
+        docname = request.GET.get('name','')
+    else:
+        docname = request.POST.get('name','')
+    backupinfo = PocBackup.objects.filter(docid = str(docname)).values_list('visitentityid','poc')
+    for data in backupinfo:
+        print data
+    return HttpResponse('')
+
+def adminadd_district(request):
+    countryname = CountryTb.objects.all().values_list('country_name')
+
+    country_name=[]
+    country_name.append('select')
+    for n in countryname:
+        country_name.append(n[0])
+
+    c = {}
+    c.update(csrf(request))
+    print country_name
+    return render_to_response('adddistrict.html',{'x':country_name,'csrf_token':c['csrf_token']})
+
+
+
+def county(request):
+    if request.method == "GET":
+        print 'hi'
+        country_name= request.GET.get('country_name',"")
+
+    elif request.method == "POST":
+        country_name= request.POST.get('country_name',"")
+    print country_name
+
+    country_obj = CountryTb.objects.get(country_name=str(country_name))
+    county_data = CountyTb.objects.filter(country_name=country_obj).values_list('county_name')
+    print county_data
+    res = []
+    res.append('select')
+    for c in county_data:
+        res.append(str(c[0]))
+    result = {'res':res}
+    res = json.dumps(result)
+    return HttpResponse(res)
+
+def save_district(request):
+    if request.method=="GET":
+        country_name = request.GET.get("country","")
+        county_name = request.GET.get("county","")
+        district_name = request.GET.get("district","")
+
+    print country_name,county_name,district_name
+    #country_obj = CountryTb.objects.get(country_name=str(country_name))
+    #county_obj = CountyTb.objects.get(county_name=str(county_name))
+    #print country_obj,county_obj,'obj',type(country_obj),type(county_obj)
+    ins_district= Disttab(country_name=str(country_name),county_name=str(county_name),district_name=str(district_name))
+    ins_district.save()
+    x = {"result":'/admin/'}
+    x=json.dumps(x)
+    return HttpResponse(x)
+
+def edit_district(request,district_id):
+    global hos_id
+    hos_id = district_id
+
+    if request.method == 'GET':
+        edit_details = Disttab.objects.get(id=int(district_id))
+    elif request.method == 'POST':
+        edit_details = Disttab.objects.get(id=int(district_id))
+
+    country = []
+    country_name = CountryTb.objects.all().values_list('country_name')
+    # print country_name,'country'
+    country.insert(0,edit_details.country_name)
+    for name in country_name:
+        if name[0] not in country:
+            country.append(str(name[0]))
+
+    county = []
+    country_obj = CountryTb.objects.get(country_name=str(edit_details.country_name))
+    county_name = CountyTb.objects.filter(country_name=country_obj).values_list('county_name')
+    print "county names",county_name
+    county.insert(0,edit_details.county_name)
+    for name in county_name:
+        if name[0] not in county:
+            county.append(str(name[0]))
+
+    print county,'county'
+
+    c = {}
+    c.update(csrf(request))
+    return render_to_response('editdistrict.html',{'country':country,'county':county,'district':edit_details.district_name,'csrf_token':c['csrf_token']})
+
+def update_district(request):
+    global hos_id
+    if request.method == 'GET':
+        country = request.GET.get('country','')
+        county = request.GET.get('county','')
+        district = str(request.GET.get('district',''))
+
+
+    #country_obj = CountryTb.objects.get(country_name=str(country))
+    #county_obj = CountyTb.objects.get(county_name=str(county))
+    print hos_id
+    #print country_obj,county_obj,district
+    update_details = Disttab.objects.filter(id=hos_id).update(country_name=str(country),county_name=str(county),district_name=str(district))
+    x = {"result":1}
+    x=json.dumps(x)
+    return HttpResponse(x)
+
+def adminadd_subdistrict(request):
+    countryname = CountryTb.objects.all().values_list('country_name')
+
+    country_name=[]
+    country_name.insert(0,'select')
+    for n in countryname:
+        country_name.append(n[0])
+
+    c = {}
+    c.update(csrf(request))
+    print country_name
+    return render_to_response('addsubdistrict.html',{'x':country_name,'csrf_token':c['csrf_token']})
+
+def district(request):
+
+    if request.method == "GET":
+        county_name= request.GET.get('county_name',"")
+
+    elif request.method == "POST":
+        county_name= request.POST.get('county_name',"")
+    print county_name
+
+    # country_obj = CountryTb.objects.get(country_name=str(country_name))
+    # county_data = CountyTb.objects.filter(country_name=country_obj).values_list('county_name')
+    # district_data = Disttab.objects.filter(country_name__country_name=str(county_name)).values_list('district_name')
+    district_data = Disttab.objects.filter(county_name=str(county_name)).values_list('district_name')
+
+    print district_data
+    res = []
+    res.append('select')
+    for d in district_data:
+        res.append(str(d[0]))
+    result = {'res':res}
+    res = json.dumps(result)
+    return HttpResponse(res)
+
+def save_subdistrict(request):
+    if request.method=="GET":
+        country_name = request.GET.get("country","")
+        county_name = request.GET.get("county","")
+        district_name = request.GET.get("district","")
+        subdistrict_name = request.GET.get("subdistrict","")
+    print country_name,county_name,district_name,subdistrict_name
+    #country_obj = CountryTb.objects.get(country_name=str(country_name))
+    #county_obj = CountyTb.objects.get(county_name=str(county_name))
+    #print country_obj,county_obj,'obj',type(country_obj),type(county_obj)
+    ins_subdistrict= SubdistrictTab(country=str(country_name),county=str(county_name),district=str(district_name),subdistrict=str(subdistrict_name))
+    ins_subdistrict.save()
+    x = {"result":'/admin/'}
+    x=json.dumps(x)
+    return HttpResponse(x)
+
+def adminadd_location(request):
+    countryname = CountryTb.objects.all().values_list('country_name')
+
+    country_name=[]
+    country_name.insert(0,'select')
+    for n in countryname:
+        country_name.append(n[0])
+
+    c = {}
+    c.update(csrf(request))
+    print country_name
+    return render_to_response('addlocation.html',{'x':country_name,'csrf_token':c['csrf_token']})
+
+def subdistrict(request):
+    if request.method == "GET":
+        district_name= request.GET.get('district_name',"")
+
+    elif request.method == "POST":
+        district_name= request.POST.get('district_name',"")
+    print district_name,"district"
+
+    subdistrict_data = SubdistrictTab.objects.filter(district=str(district_name)).values_list('subdistrict')
+    print subdistrict_data,'data'
+    res = []
+    res.append('select')
+    for s in subdistrict_data:
+        res.append(str(s[0]))
+    result = {'res':res}
+    res = json.dumps(result)
+    return HttpResponse(res)
+
+def save_location(request):
+    if request.method=="GET":
+        country_name = request.GET.get("country","")
+        county_name = request.GET.get("county","")
+        district_name = request.GET.get("district","")
+        subdistrict_name = request.GET.get("subdistrict","")
+        location_name = request.GET.get("location","")
+    print country_name,county_name,district_name,subdistrict_name,location_name
+    #country_obj = CountryTb.objects.get(country_name=str(country_name))
+    #county_obj = CountyTb.objects.get(county_name=str(county_name))
+    #print country_obj,county_obj,'obj',type(country_obj),type(county_obj)
+    ins_location= LocationTab(country=str(country_name),county=str(county_name),district=str(district_name),subdistrict=str(subdistrict_name),location=str(location_name))
+    ins_location.save()
+    x = {"result":'/admin/'}
+    x=json.dumps(x)
+    return HttpResponse(x)
+
+def edit_subdistrict(request,subdistrict_id):
+    global hos_id
+    hos_id = subdistrict_id
+    if request.method == 'GET':
+        edit_details = SubdistrictTab.objects.get(id=int(subdistrict_id))
+    elif request.method == 'POST':
+        edit_details = SubdistrictTab.objects.get(id=int(subdistrict_id))
+
+    country = []
+    country_name = CountryTb.objects.all().values_list('country_name')
+    country.insert(0,edit_details.country)
+    for name in country_name:
+        if name[0] not in country:
+            country.append(str(name[0]))
+
+    print country,'country'
+    county = []
+    county_name = CountyTb.objects.all().values_list('county_name')
+    county.insert(0,edit_details.county)
+    for name in county_name:
+        if name[0] not in county:
+            county.append(str(name[0]))
+
+    print county,'county'
+
+    district = []
+    district_name = Disttab.objects.all().values_list('district_name')
+    district.insert(0,edit_details.district)
+    for name in district_name:
+        if name[0] not in district:
+            district.append(str(name[0]))
+
+    print district,'district'
+
+    c = {}
+    c.update(csrf(request))
+    return render_to_response('editsubdistrict.html',{'country':country,'county':county,'district':district,'subdistrict':edit_details.subdistrict,'csrf_token':c['csrf_token']})
+
+def update_subdistrict(request):
+    global hos_id
+    if request.method == 'GET':
+        country = str(request.GET.get('country',''))
+        county = str(request.GET.get('county',''))
+        district = str(request.GET.get('district',''))
+        subdistrict = str(request.GET.get('subdistrict',''))
+
+
+    #country_obj = CountryTb.objects.get(country_name=str(country))
+    #county_obj = CountyTb.objects.get(county_name=str(county))
+    #print hos_id
+    #print country_obj,county_obj,district
+    print country,county, district,subdistrict,hos_id
+    update_details = SubdistrictTab.objects.filter(id=hos_id).update(country=country,county=county,district=str(district),subdistrict=str(subdistrict))
+    x = {"result":1}
+    x=json.dumps(x)
+    return HttpResponse(x)
+
+def edit_location(request,loc_id):
+    global hos_id
+    hos_id = loc_id
+    if request.method == 'GET':
+        edit_details = LocationTab.objects.get(id=int(loc_id))
+    elif request.method == 'POST':
+        edit_details = LocationTab.objects.get(id=int(loc_id))
+
+    country = []
+    country_name = CountryTb.objects.all().values_list('country_name')
+    country.insert(0,edit_details.country)
+    for name in country_name:
+        if name[0] not in country:
+            country.append(str(name[0]))
+
+    print country,'country'
+    county = []
+    county_name = CountyTb.objects.all().values_list('county_name')
+    county.insert(0,edit_details.county)
+    for name in county_name:
+        if name[0] not in county:
+            county.append(str(name[0]))
+
+    print county,'county'
+
+    district = []
+    district_name = Disttab.objects.all().values_list('district_name')
+    district.insert(0,edit_details.district)
+    for name in district_name:
+        if name[0] not in district:
+            district.append(str(name[0]))
+
+    print district,'district'
+
+    subdistrict = []
+    subdistrict_name = SubdistrictTab.objects.all().values_list('subdistrict')
+    subdistrict.insert(0,edit_details.subdistrict)
+    for name in subdistrict_name:
+        if name[0] not in subdistrict:
+            subdistrict.append(str(name[0]))
+
+    print subdistrict,'subdistrict'
+    c = {}
+    c.update(csrf(request))
+    #print 'id',location_id
+    return render_to_response('editlocation.html',{'country':country,'county':county,'district':district,'subdistrict':subdistrict,'location':edit_details.location,'csrf_token':c['csrf_token']})
+
+def update_location(request):
+    global hos_id
+    print hos_id
+    if request.method == 'GET':
+        country = str(request.GET.get('country',''))
+        county = str(request.GET.get('county',''))
+        district = str(request.GET.get('district',''))
+        subdistrict = str(request.GET.get('subdistrict',''))
+        location = str(request.GET.get('location',''))
+
+
+    #country_obj = CountryTb.objects.get(country_name=str(country))
+    #county_obj = CountyTb.objects.get(county_name=str(county))
+    #print hos_id
+    #print country_obj,county_obj,district
+    print country,county, district,subdistrict,location,hos_id
+    update_details = LocationTab.objects.filter(id=hos_id).update(country=country,county=county,district=str(district),subdistrict=str(subdistrict),location=str(location))
+    x = {"result":1}
+    x=json.dumps(x)
+    return HttpResponse(x)
+
+def location(request):
+    if request.method == "GET":
+        subdistrict_name= request.GET.get('subdistrict_name',"")
+
+    elif request.method == "POST":
+        subdistrict_name= request.POST.get('subdistrict_name',"")
+    print subdistrict_name,"subdistrict"
+
+    location_data = LocationTab.objects.filter(subdistrict=str(subdistrict_name)).values_list('location')
+    print location_data,'data'
+    res = []
+    village=[]
+    res.append('select')
+    for l in location_data:
+        res.append(str(l[0]))
+        village.append(str(l[0]))
+    result = {'res':res,'village':village}
+    res = json.dumps(result)
+    return HttpResponse(res)
+
+def save_subdistrict(request):
+    if request.method=="GET":
+        hospital_name = request.GET.get("hosname","")
+        hospital_type = request.GET.get("hostype","")
+        address = request.GET.get("address","")
+        country_name = request.GET.get("country","")
+        county_name = request.GET.get("county","")
+        district_name = request.GET.get("district","")
+        subdistrict_name = request.GET.get("subdistrict","")
+        location_name = request.GET.get("location","")
+        parent_hos = request.GET.get("parenthos","")
+        villages = request.GET.get("villages","")
+    print hospital_name,hospital_type,address,country_name,county_name,district_name,subdistrict_name,location_name,parent_hos,villages
+    #country_obj = CountryTb.objects.get(country_name=str(country_name))
+    #county_obj = CountyTb.objects.get(county_name=str(county_name))
+    #print country_obj,county_obj,'obj',type(country_obj),type(county_obj)
+    #ins_subdistrict= SubdistrictTab(country=str(country_name),county=str(county_name),district=str(district_name),subdistrict=str(subdistrict_name))
+    #ins_subdistrict.save()
+    x = {"result":'/admin/'}
+    x=json.dumps(x)
+    return HttpResponse(x)
+
+def adminadd_user(request):
+    countryname = CountryTb.objects.all().values_list('country_name')
+
+    country_name=[]
+    country_name.insert(0,'select')
+    for n in countryname:
+        country_name.append(n[0])
+
+    c = {}
+    c.update(csrf(request))
+    return render_to_response('addUser.html',{'x':country_name,'csrf_token':c['csrf_token']})
