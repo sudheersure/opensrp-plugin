@@ -293,12 +293,12 @@ div.submit {
                 villages.push($(this).val());
             });
             villages=villages.join(",")
-            
+
             //alert(villages)
             var parenthos = $("select[name=parent_hospital]").val();
             //alert(parenthos)
             var active = [];
-            $.each($("input[name='status']:checked"), function(){            
+            $.each($("input[name='status']:checked"), function(){
                 active.push($(this).val());
             });
             $.ajax({

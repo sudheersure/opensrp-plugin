@@ -1,10 +1,359 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en-us" >
 <head>
-    <meta charset="UTF-8">
-    <title></title>
+<title>Add Sub District details | OpenSRP </title>
+<link rel="stylesheet" type="text/css" href="/static/admin/css/base.css" />
+
+<style>
+h1 {
+    font-size:200%;
+}
+legend {
+    padding:0 5px;
+    text-align:right;
+}
+fieldset > div {
+    margin:10px 0;
+}
+fieldset > legend + div {
+    margin-top:0;
+}
+fieldset > div:last-child {
+    margin-bottom:0;
+}
+label {
+    display:inline-block;
+    width:100px;
+}
+/*input {
+    width:200px;
+}*/
+input[type="number"] {
+    width:30px;
+}
+div > input[type="submit"] {
+    background: #ccc;
+    border:1px solid #999;
+    width:auto;
+}
+input:required {
+    background:hsl(180, 50%, 90%);
+    border:1px solid #999;
+}
+input:optional {
+    background:hsl(300, 50%, 90%);
+    border:1px dotted hsl(180, 50%, 90%);
+}
+input:valid
+input:in-range {
+    background:hsl(120, 50%, 90%);
+    border-color:hsl(120, 50%, 50%);
+}
+
+input:invalid,
+input:out-of-range {
+    border-color:hsl(0, 50%, 50%);
+    background:hsl(0, 50%, 90%);
+}
+.help {
+    display:none;
+    font-size:90%;
+}
+input:focus + .help {
+    display:inline-block;
+}
+div.submit {
+    margin-left:100px;
+}
+.field-validation-error
+{
+
+    color:red;
+}
+</style>
+<link rel="stylesheet" type="text/css" href="/static/admin/css/forms.css" />
+<!--[if lte IE 7]><link rel="stylesheet" type="text/css" href="/static/admin/css/ie.css" /><![endif]-->
+
+<script type="text/javascript">window.__admin_media_prefix__ = "/static/admin/";</script>
+<script type="text/javascript">window.__admin_utc_offset__ = "0";</script>
+
+<script type="text/javascript" src="/admin/jsi18n/"></script>
+<script type="text/javascript" src="/static/admin/js/core.js"></script>
+<script type="text/javascript" src="/static/admin/js/admin/RelatedObjectLookups.js"></script>
+<script type="text/javascript" src="/static/admin/js/jquery.js"></script>
+<script type="text/javascript" src="/static/admin/js/jquery.init.js"></script>
+<script type="text/javascript" src="/static/admin/js/actions.js"></script>
+<script type="text/javascript" src="https://code.jquery.com/jquery-1.8.2.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-validate/1.14.0/jquery.validate.min.js"></script>
+
+<!--added cdn for unobtrusive validation-->
+
+<script src="http://ajax.aspnetcdn.com/ajax/mvc/5.2.3/jquery.validate.unobtrusive.min.js"></script>
+
+<meta name="robots" content="NONE,NOARCHIVE" />
+<style type="text/css">
+        #header {
+                   background: #000066
+         }
+
+</style>
 </head>
-<body>
+
+<body class=" app-Masters model-hospitaldetails change-form">
+
+<!-- Container -->
+<div id="container">
+
+
+    <!-- Header -->
+    <div id="header">
+        <div id="branding">
+
+<h1 id="site-name"><a href="/admin/">OpenSRP</a></h1>
+
+        </div>
+
+        <div id="user-tools">
+
+                Welcome,
+                <strong>root</strong>.
+
+
+                <a href="/admin/password_change/">Change password</a> /
+
+                <a href="/admin/logout/">Log out</a>
+
+        </div>
+
+
+    </div>
+    <!-- END Header -->
+
+<div class="breadcrumbs">
+<a href="/admin/">Home</a>
+&rsaquo; <a href="/admin/Masters/">Masters</a>
+&rsaquo; <a href="/admin/Masters/subdistricttab/">subdistrict</a>
+&rsaquo; Add Sub District
+</div>
+
+    <!-- Content -->
+    <div id="content" class="colM">
+
+        <h1>Add SubDistrict details</h1>
+        <div id="content-main">
+
+
+
+
+<form enctype="multipart/form-data" action="" method="get" id="subdistrict_form" >
+    {% csrf_token %}
+<div>
+
+  <fieldset class="module aligned ">
+    
+    
+    
+        <div class="form-row field-country_name">
+            
+            
+                <div>
+                    
+                    
+                        <label class="required" for="country">Country name:<span style="color:red">&nbsp;*</span></label>
+                        
+                            <select id="country" name="country_name" value ="" data-val="true" data-val-required="country cannot be empty">
+                            <option value="">select</option>
+                            {%for x in x %}
+                            <option value="{{x}}" >{{x}}</option>
+                            {% endfor %}
+                            </select>
+                        <span class="field-validation-valid" data-valmsg-for="country_name" data-valmsg-replace="true" ></span> 
+                    
+                    
+                </div>
+            
+        </div>
+    
+        <div class="form-row field-county_name">
+            
+            
+                <div>
+                    
+                    
+                        <label class="required" for="id_county_name">County name:<span style="color:red">&nbsp;*</span></label>
+
+                            <select id="id_county_name" name="county_name"  data-val="true" data-val-required="county cannot be empty" >
+                       </select>
+                         <span class="field-validation-valid" data-valmsg-for="county_name" data-valmsg-replace="true" ></span> 
+                    
+                    
+                </div>
+            
+        </div>
+        <div class="form-row field-district_name">
+
+
+                <div>
+
+
+                        <label class="required" for="id_district_name">District name:<span style="color:red">&nbsp;*</span></label>
+
+                            <select id="id_district_name" name="district_name"  data-val="true" data-val-required="district cannot be empty">
+                       </select>
+
+                       <span class="field-validation-valid" data-valmsg-for="district_name" data-valmsg-replace="true" ></span>
+                    
+
+
+
+                </div>
+
+        </div>
+        <div class="form-row field-sub_district_name">
+
+
+                <div>
+
+
+                        <label class="required" for="id_subdistrict_name">Sub-District name:<span style="color:red">&nbsp;*</span></label>
+
+                           <!--  <input class="vTextField" id="id_subdistrict_name" name="subdistrict"    /> -->
+                     <input type="hidden" value="0" name="id">
+                            <input class="vTextField" id="id_subdistrict_name" name="sname"  data-val="true" data-val-required="subdistrict cannot be empty" data-val-regex="Only characters allowed" data-val-regex-pattern="^[a-zA-Z ]*$"  data-val-remote-url="/subdistrictvalidate/" data-val-remote-additionalfields="*.id,*.sname" data-val-remote="Sub-District with this name already registered"/>
+                      
+
+                       <span class="field-validation-valid" data-valmsg-for="sname" data-valmsg-replace="true" ></span>
+
+
+
+                </div>
+
+        </div>
+        <div class="form-row field-status">
+                <div class="checkbox-row">
+                        <input checked="checked" id="status" name="status" type="checkbox" />
+                        <label class="vCheckboxLabel" for="id_status">active</label> 
+                </div>
+            
+        </div>
+    
+</fieldset>
+
+</div>
+
+
+<div class="submit-row">
+<button type="submit" class="btn btn-success" id="advance-save-button">save</button>
+<button type="button" class="btn btn-success" id="advance-cancel-button"  onclick="window.location='/admin/Masters/subdistricttab/'">cancel</button>
+</div>
+
+</form></div>
+
+  <br class="clear" />
+    </div>
+    <!-- END Content -->
+    <div id="footer"></div>
+
+
+<script type="text/javascript">
+(function($) {
+    var field;
+})(django.jQuery);
+</script>
+
+
+
+<script type="text/javascript">
+ $("document").ready(function(){
+    $("#country").on('change', function(e){
+        var dev = $(e.currentTarget).val();
+        //alert(dev)
+        $.ajax({
+            url:"/county/?country_name="+ dev,
+            type: "GET",
+            dataType: "json",
+            success: function(result){
+                $('#id_county_name').empty();
+                 $("#id_county_name").append($('<option value="">select</option>'));
+                $.each(result.res, function(key, valtext){
+                    $('#id_county_name').append($('<option>', {
+                        value: valtext,
+                        text : valtext
+                    }));
+                });
+            }
+        })
+    });
+});
+
+ $("document").ready(function(){
+    $("#id_county_name").on('change', function(e){
+        var county = $(e.currentTarget).val();
+        //alert(county)
+        $.ajax({
+            url:"/district/?county_name="+ county,
+            type: "GET",
+            dataType: "json",
+            success: function(result){
+                $('#id_district_name').empty();
+                 $("#id_district_name").append($('<option value="">select</option>'));
+                $.each(result.res, function(key, valtext){
+                    $('#id_district_name').append($('<option>', {
+                        value: valtext,
+                        text : valtext
+                    }));
+                });
+            }
+        })
+    });
+});
+
+ $("document").ready(function(){
+
+    $("form").submit(function  (e) {
+        
+        e.preventDefault();
+
+        if ($("form").valid()) {
+            var country = $("select[name=country_name]").val();
+            //alert(country)
+            var county = $("select[name=county_name]").val();
+            //alert(county)
+            var district = $("select[name=district_name]").val();
+            //alert(district)
+            var subdistrict = document.getElementById("id_subdistrict_name").value;
+            //alert(subdistrict)
+            var active=document.getElementById('status').checked==true ? "true" :"false";
+
+            $.ajax({
+
+                url: "/savesubdistrict/?country="+ country +"&county="+ county +"&district="+ district+"&subdistrict="+ subdistrict+"&active="+active,
+                type: 'GET',
+                acceptType: "json",
+                success: function (result) {
+                if (result.error){
+                    // $("p.error").remove();
+                    //alert('hi');
+                    for (var key in result.response.keys()){
+                        $("#id_"+key).after("<p class='error'>"+result.response[key]+"</p>")
+                    }
+
+                }else{
+                    //top.location.href = result.redirect;
+                    //alert('district');
+                    window.location='/admin/Masters/subdistricttab/';
+                }
+                }
+
+            });
+
+        }
+        
+    });
+})
+</script>
+
+
 
 </body>
 </html>

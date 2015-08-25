@@ -37,6 +37,8 @@ INSTALLED_APPS = (
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'Masters',
+    'smart_selects',
+    'multiselectfield',
 )
 
 MIDDLEWARE_CLASSES = (
@@ -63,6 +65,7 @@ DATABASES = {
         'NAME': 'drishti',
         'USER': 'dhanush',
         'PASSWORD': 'dhanush',
+        #'HOST': '10.10.11.75',
         'HOST': 'localhost',
         'PORT': '5432',
         'OPTIONS': {
@@ -91,9 +94,8 @@ USE_TZ = True
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/1.7/howto/static-files/
-
 STATIC_URL = '/static/'
-
+# STATIC_ ROOT= '/static/'
 MEDIA_URL = '/media/'
 
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
@@ -101,7 +103,43 @@ MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 ADMIN_MEDIA_PREFIX = '/static/admin/'
 
 TEMPLATE_DIRS = [os.path.join(BASE_DIR, 'templates')]
-
-USER_ROLE={"ANM":"ROLE_USER","PHC":"ROLE_PHC_USER","DOC":"ROLE_DOC_USER"}
-
 DRUG_MAP = {"CHILD":0,"PNC":1,"ANC":2}
+USER_ROLE={"ANM":"ROLE_USER","PHC":"ROLE_PHC_USER","DOC":"ROLE_DOC_USER"}
+STATICFILES_DIRS = (BASE_DIR + '/static',)
+
+
+import sys
+if 'test' in sys.argv:
+    DATABASES['default'] = {
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': 'mydatabase'
+    }
+
+DISEASES = ('Pallor',
+'Swelling / Edema',
+'Bleeding',
+'Jaundice',
+'Fits / Convulsions',
+'Difficult Breathing',
+'Bad Headache',
+'Blurred Vision',
+'Uterus is soft or tender',
+'Abdominal Pain',
+'Bad Smelling lochea',
+'Heavy Bleeding per vaginum',
+'Infected perineum suture',
+'Difficulty Passing Urine',
+'Burning sensation when urinating',
+'Breast Hardness',
+'Nipple Hardness',
+'Mealses',
+'Diarrhea and dehydration',
+'Malaria',
+'Acute Respiratory Infection',
+'Severe Acute Mal Nutrition',
+'Cough',
+'Diarrhea',
+'Fever',
+'Convulsions',
+'Vomiting')
+

@@ -1,0 +1,681 @@
+<!DOCTYPE html>
+<html lang="en-us" >
+<head>
+<title>Add User details | OpenSRP </title>
+<link rel="stylesheet" type="text/css" href="/static/admin/css/base.css" />
+
+<style>
+h1 {
+    font-size:200%;
+}
+legend {
+    padding:0 5px;
+    text-align:right;
+}
+fieldset > div {
+    margin:10px 0;
+}
+fieldset > legend + div {
+    margin-top:0;
+}
+fieldset > div:last-child {
+    margin-bottom:0;
+}
+label {
+    display:inline-block;
+    width:100px;
+}
+/*input {
+    width:200px;
+}*/
+input[type="number"] {
+    width:30px;
+}
+div > input[type="submit"] {
+    background: #ccc;
+    border:1px solid #999;
+    width:auto;
+}
+input:required {
+    background:hsl(180, 50%, 90%);
+    border:1px solid #999;
+}
+input:optional {
+    background:hsl(300, 50%, 90%);
+    border:1px dotted hsl(180, 50%, 90%);
+}
+input:valid
+input:in-range {
+    background:hsl(120, 50%, 90%);
+    border-color:hsl(120, 50%, 50%);
+}
+
+input:invalid,
+input:out-of-range {
+    border-color:hsl(0, 50%, 50%);
+    background:hsl(0, 50%, 90%);
+}
+.help {
+    display:none;
+    font-size:90%;
+}
+input:focus + .help {
+    display:inline-block;
+}
+div.submit {
+    margin-left:100px;
+}
+.field-validation-error
+{
+
+    color:red;
+}
+</style>
+<link rel="stylesheet" type="text/css" href="/static/admin/css/forms.css" />
+<!--[if lte IE 7]><link rel="stylesheet" type="text/css" href="/static/admin/css/ie.css" /><![endif]-->
+
+<script type="text/javascript">window.__admin_media_prefix__ = "/static/admin/";</script>
+<script type="text/javascript">window.__admin_utc_offset__ = "0";</script>
+
+<script type="text/javascript" src="/admin/jsi18n/"></script>
+<script type="text/javascript" src="/static/admin/js/core.js"></script>
+<script type="text/javascript" src="/static/admin/js/admin/RelatedObjectLookups.js"></script>
+<script type="text/javascript" src="/static/admin/js/jquery.js"></script>
+<script type="text/javascript" src="/static/admin/js/jquery.init.js"></script>
+<script type="text/javascript" src="/static/admin/js/actions.js"></script>
+<script type="text/javascript" src="https://code.jquery.com/jquery-1.8.2.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-validate/1.14.0/jquery.validate.min.js"></script>
+
+<!--added cdn for unobtrusive validation-->
+
+<script src="http://ajax.aspnetcdn.com/ajax/mvc/5.2.3/jquery.validate.unobtrusive.min.js"></script>
+<script type="text/javascript" src="/static/conditional-validation-doctor.js"></script>
+
+<meta name="robots" content="NONE,NOARCHIVE" />
+<style type="text/css">
+        #header {
+                   background: #000066
+         }
+
+</style>
+</head>
+
+<body class=" app-Masters model-userdetails change-form">
+
+<!-- Container -->
+<div id="container">
+
+
+    <!-- Header -->
+    <div id="header">
+        <div id="branding">
+
+<h1 id="site-name"><a href="/admin/">OpenSRP</a></h1>
+
+        </div>
+
+        <div id="user-tools">
+
+                Welcome,
+                <strong>root</strong>.
+
+
+                <a href="/admin/password_change/">Change password</a> /
+
+                <a href="/admin/logout/">Log out</a>
+
+        </div>
+
+
+    </div>
+    <!-- END Header -->
+
+<div class="breadcrumbs">
+<a href="/admin/">Home</a>
+&rsaquo; <a href="/admin/Masters/">Masters</a>
+&rsaquo; <a href="/admin/Masters/usermasters/">UserMaintenance</a>
+&rsaquo; Add UserMaintenance
+</div>
+
+    <!-- Content -->
+    <div id="content" class="colM">
+
+        <h1>Add User details</h1>
+        <div id="content-main">
+
+
+
+
+<form enctype="multipart/form-data" action="" method="get" id="user_form">
+{% csrf_token %}
+<div>
+  <fieldset class="module aligned ">
+   
+        <div class="form-row field-user_role">
+  
+            
+            
+        </div>    
+        
+        <div class="form-row field-user_role">
+                  <div>
+                        <label class="required" for="user_role">User Role:<span style="color:red">&nbsp;*</span></label>
+
+                            <select id="user_role" name="user_role"  data-val="true" data-val-required="Role cannot be empty" onchange="switchControls(this.value)" >
+                                <!--{%for x in x %}
+                                <option value="{{x}}" >{{x}}</option>
+                                {% endfor %}-->
+                                <option value="">select</option>
+                                <option value="ANM">Health Worker</option>
+                                <option value="DOC">Doctor</option>
+                            </select>
+                            <span class="field-validation-valid" data-valmsg-for="user_role" data-valmsg-replace="true"></span>
+                </div>
+        </div>
+        <div class="form-row field-user_id">
+            <input type="hidden" value="0" name="id">
+                        <div>
+                        <label class="required" for="uname">User ID:<span style="color:red">&nbsp;*</span></label>
+                        <input class="vTextField" id="id_user_id" name="uname"  data-val="true" data-val-required="User ID cannot be empty" data-val-regex="Special characters are not allowed" data-val-regex-pattern="^[^/\\~@#$%^*\&lt;>`=+|]*$" maxlength="10" data-val-remote-url="/uservalidate/" data-val-remote-additionalfields="*.id,*.uname" data-val-remote="User with this id already registered"/>
+                        <span class="field-validation-valid" data-valmsg-for="uname" data-valmsg-replace="true" ></span>
+                        </div>
+            
+        </div>
+        <div class="form-row field-user_name">
+            
+                        <div>
+                        <label class="required" for="name">Name:<span style="color:red">&nbsp;*</span></label>
+                        <input class="vTextField" id="id_user_fname" name="id_user_fname" value="" data-val="true" data-val-required="FirstName cannot be empty"  data-val-regex="Only characters allowed" data-val-regex-pattern="^[a-zA-Z ]*$" />
+                        <span class="field-validation-valid" data-valmsg-for="id_user_fname" data-valmsg-replace="true"></span>
+                         <input class="vTextField" id="id_user_lname" name="id_user_lname" value="" data-val="true" data-val-required="LastName cannot be empty"  data-val-regex="Only characters allowed" data-val-regex-pattern="^[a-zA-Z ]*$">
+                         
+                          <span class="field-validation-valid" data-valmsg-for="id_user_lname" data-valmsg-replace="true"></span>
+                        </div>
+            
+        </div>
+        <div class="form-row field-user_pwd">
+            
+                        <div>
+                        <label class="required" for="id_user_pwd">Password:<span style="color:red">&nbsp;*</span></label>
+                        
+                         <input type="password" class="vTextField" id="id_user_pwd" name="id_user_pwd" value="" data-val="true" data-val-required="Pasword cannot be empty" minlength="6" maxlength="10"/>
+                          <span class="field-validation-valid" data-valmsg-for="id_user_pwd" data-valmsg-replace="true" ></span>
+                        </div>
+            
+        </div>
+        <div class="form-row field-user_phone_num">
+            
+                        <div>
+                        <label class="required" for="id_user_phnum">Phone Number:<span style="color:red">&nbsp;*</span></label>
+                        
+                        <input type="text" class="vTextField" id="id_user_phnum" name="id_user_phnum" value="" data-val="true" data-val-required="Phone Number cannot be empty" data-val-number="feild must be number" minlength="7" maxlength="13" />
+                         <span class="field-validation-valid" data-valmsg-for="id_user_phnum" data-valmsg-replace="true"></span>
+                        </div>
+            
+        </div>
+        <div class="form-row field-user_email">
+            
+                        <div>
+                        <label class="required" for="id_user_email">Email:</label>
+                        
+               <input type="text" class="vTextField" id="id_user_email" name="id_user_email"  data-val="true" data-val-regex="Please enter a valid email" data-val-regex-pattern="^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$" />
+                         <span class="field-validation-valid" data-valmsg-for="id_user_email" data-valmsg-replace="true" ></span>
+                        </div>
+            
+        </div>        
+         <div class="form-row field-country">
+                  <div>
+                        <label class="required" for="country">Country name:<span id="country-span" style="color:red">&nbsp;*</span></label>
+
+                            <select id="country" name="country_name" data-val="true"  data-val-required-cond="Country cannot be empty" data-val-required-cond-value="user_role">
+                            <option value="">select</option>
+                                {%for x in x %}
+
+                                <option value="{{x}}" >{{x}}</option>
+                                {% endfor %}
+                            </select>
+                             <span class="field-validation-valid" data-valmsg-for="country_name" data-valmsg-replace="true" ></span>
+                </div>
+        </div>
+        <div class="form-row field-county">
+              <div>
+                        <label class="required" for="id_county_name">County name:<span id="county-span" style="color:red">&nbsp;*</span></label>
+
+                            <select id="id_county_name" name="county_name" value=""  data-val="true" data-val-required-cond="County cannot be empty" data-val-required-cond-value="user_role">
+
+                       </select>
+                       <span class="field-validation-valid" data-valmsg-for="county_name" data-valmsg-replace="true" ></span>
+                   
+              </div>
+        </div>
+        <div class="form-row field-district_name">
+                <div>
+                        <label class="required" for="id_district_name">District name:<span id="district-span" style="color:red">&nbsp;*</span></label>
+                        <select id="id_district_name" name="district_name" value=""  data-val="true"   data-val-required-cond="District cannot be empty" data-val-required-cond-value="user_role">
+                        </select>
+                        <span class="field-validation-valid" data-valmsg-for="district_name" data-valmsg-replace="true" ></span>
+                </div>
+
+        </div>
+        <div class="form-row field-sub_district_name">
+                <div>
+                    
+                        <label class="required" for="id_subdistrict_name">Sub-District name:<span id="subdistrict-span" style="color:red">&nbsp;*</span></label>
+
+                            <select id="id_subdistrict_name" name="subdistrict_name" value=""  data-val="true"  data-val-required-cond="Sub District cannot be empty" data-val-required-cond-value="user_role" >
+                       </select>
+
+                   <span class="field-validation-valid" data-valmsg-for="subdistrict_name" data-valmsg-replace="true" ></span>
+                </div>
+        </div>
+        <div class="form-row field-sub_center" id="dv-sub_center" style="display:none">
+                <div>
+                    
+                        <label class="required" for="id_sub_center">Sub- Center:<span style="color:red">&nbsp;*</span></label>
+
+                            <select id="id_sub_center" name="id_sub_center" value="" data-val="true" data-val-required="Sub Center cannot be empty" >
+                       </select>
+ <span class="field-validation-valid" data-valmsg-for="id_sub_center" data-valmsg-replace="true" ></span>
+                   
+                </div>
+        </div>
+       <!--  <div class="form-row field-sub_location_name" id="dv-village" style="display:none">
+                <div>
+                    
+                    
+                        <label class="required" for="id_location_name">Village / Location:</label>
+                        
+                <select id="id_location_name" name="village_location" multiple >
+
+	            </select>
+                   
+                </div>
+        </div>
+ -->    <div class="form-row field-sub_location_name" id="dv-village" style="display:none">
+                <div>
+
+
+                        <label class="required" for="id_location_name">Village / Location:<span style="color:red">&nbsp;*</span></label>
+
+                <div  id='village-select'>
+
+                </div>
+
+ <span class="field-validation-valid" data-valmsg-for="village" data-valmsg-replace="true" ></span>
+
+                </div>
+        </div>
+        <div class="form-row field-hosp_name" id="dv-hosp" style="display:none">
+                <div>
+                    
+                    
+                        <label class="required" for="id_hosp_name">Hospital:</label>
+                        <select id="id_hosp_name" name="id_hosp_name"  >
+
+                </select>
+                        
+              <!--   <select id="id_hosp_name" name="id_hosp_name"   data-val="true"  data-val-required-cond="Hospital cannot be empty" data-val-required-cond-value="user_role">
+
+                </select>
+                    <span class="field-validation-valid" data-valmsg-for="id_hosp_name" data-valmsg-replace="true" ></span> -->
+                </div>
+        </div>
+        
+<div class="form-row field-status">
+                <div class="checkbox-row">
+                        <input checked="checked" id="status" name="status" type="checkbox" />
+                        <label class="vCheckboxLabel" for="id_status">active</label>
+                </div>
+
+        </div>
+</div>
+ 
+        
+    
+        
+</fieldset>
+
+<div class="submit-row">
+<button type="submit" class="btn btn-success"   id="advance-save-button" >save</button>
+<button type="button" class="btn btn-success" id="advance-cancel-button">cancel</button>
+</div>
+</div>
+</form></div>
+        <br class="clear" />
+    </div>
+    <!-- END Content -->
+
+    <div id="footer"></div>
+</div>
+<!-- END Container -->
+
+<script type="text/javascript">
+(function($) {
+    var field;
+
+
+})(django.jQuery);
+</script>
+
+<script type="text/javascript">
+
+
+ jQuery.validator.unobtrusive.adapters.add("checkbox", function (options) {
+
+    //b-required for checkboxes
+
+    if (options.element.tagName.toUpperCase() == "INPUT" && options.element.type.toUpperCase() == "CHECKBOX") {
+
+        //setValidationValues(options, "required", true);
+
+        options.rules["required"] = true;
+
+        if (options.message) {
+
+            options.messages["required"] = options.message;
+
+        }
+
+    }
+
+});
+$("document").ready(function(){
+   
+  //  $("#id_user_role").on('change',function  (e) {
+  //      // body...
+  //       //e.preventDefault();
+  //      var temp=$(e.currentTarget).val();
+  //      if (temp=="ANM") {
+  //       debugger
+  //      $.validator.unobtrusive.parse(document);      
+  //       $('form').validate();
+         
+  //      }
+  //      if (temp=="DOC") {
+  //       debugger
+  // $.data($('form').get(0), 'validator').settings.ignore = '#id_county_name';
+  //         $.validator.unobtrusive.parse(document);      
+  //      }
+     
+      
+  //      switchControls($(e.currentTarget).val())
+       
+  //  });
+   
+
+    $("#country").on('change', function(e){
+        var dev = $(e.currentTarget).val();
+        //alert(dev)
+        $.ajax({
+            url:"/county/?country_name="+ dev,
+            type: "GET",
+            dataType: "json",
+            success: function(result){
+                $('#id_county_name').empty();
+                $('#id_hosp_name').empty();
+                $("#id_county_name").append($('<option value="">select</option>'))
+                $("#id_hosp_name").append($('<option value="">select</option>'))
+                $.each(result.res, function(key, valtext){
+                    $('#id_county_name').append($('<option>', {
+                        value: valtext,
+                        text : valtext
+                    }));
+                });
+                
+                $.each(result.hospitals, function(key, valtext){
+                    $('#id_hosp_name').append($('<option>', {
+                        value: valtext,
+                        text : valtext
+                    }));
+
+                });
+            }
+        })
+    });
+
+    $("#id_county_name").on('change', function(e){
+        var county = $(e.currentTarget).val();
+        //alert(county)
+        $.ajax({
+            url:"/district/?county_name="+ county,
+            type: "GET",
+            dataType: "json",
+            success: function(result){
+                $('#id_district_name').empty();
+                $('#id_hosp_name').empty();
+                $("#id_district_name").append($('<option value="">select</option>'))
+                $("#id_hosp_name").append($('<option value="">select</option>'))
+                $.each(result.res, function(key, valtext){
+                    $('#id_district_name').append($('<option>', {
+                        value: valtext,
+                        text : valtext
+                    }));
+                });
+                $.each(result.hospitals, function(key, valtext){
+                    $('#id_hosp_name').append($('<option>', {
+                        value: valtext,
+                        text : valtext
+                        
+                    }));
+
+                });
+            }
+        })
+    });
+
+    $("#id_district_name").on('change', function(e){
+        var district = $(e.currentTarget).val();
+        //alert(district)
+        $.ajax({
+            url:"/subdistrict/?district_name="+ district,
+            type: "GET",
+            dataType: "json",
+            success: function(result){
+                $('#id_subdistrict_name').empty();
+                $('#id_hosp_name').empty();
+                 $("#id_subdistrict_name").append($('<option value="">select</option>'))
+                 $("#id_hosp_name").append($('<option value="">select</option>'))
+                $.each(result.res, function(key, valtext){
+
+                    $('#id_subdistrict_name').append($('<option>', {
+                        value: valtext,
+                        text : valtext
+                    }));
+                });
+                $.each(result.hospitals, function(key, valtext){
+                    $('#id_hosp_name').append($('<option>', {
+                        value: valtext,
+                        text : valtext
+                        
+                    }));
+
+                });
+            }
+        })
+    });
+
+    $("#id_subdistrict_name").on('change', function(e){
+        var subdistrict = $(e.currentTarget).val();
+        //alert(subdistrict)
+        $.ajax({
+            url:"/location/?subdistrict_name="+ subdistrict,
+            type: "GET",
+            dataType: "json",
+            success: function(result){
+               //$('#id_location_name').empty();
+                $('#id_sub_center').empty();
+                $('#id_hosp_name').empty();
+                $("#id_sub_center").append($('<option value="">select</option>'))
+                $("#id_hosp_name").append($('<option value="">select</option>'))
+                $.each(result.subcenter, function(key, valtext){
+                    $('#id_sub_center').append($('<option>', {
+                        value: valtext,
+                        text : valtext
+                    }));
+                });
+                $.each(result.hospitals, function(key, valtext){
+                    $('#id_hosp_name').append($('<option>', {
+                        value: valtext,
+                        text : valtext
+                        
+                    }));
+
+                });
+                // $.each(result.village, function(key, valtext){
+                //     $("#village-select").append("<input type=checkbox value='"+valtext+"' name='village'>"+valtext);
+                // });
+            }
+        })
+    });
+
+    
+
+    $("#id_sub_center").on('change', function(e){
+        var loc = $(e.currentTarget).val();
+        //alert(loc)
+        $.ajax({
+            url:"/subcenter/?location="+ loc,
+            type: "GET",
+            dataType: "json",
+            success: function(result){
+               //$('#id_location_name').empty();
+                $('#village-select').empty();
+                 $("form").removeData("validator").removeData("unobtrusiveValidation"); 
+                $.validator.unobtrusive.parse("form");
+                $.each(result.res, function(key, valtext){
+                    $("#village-select").append("<input type='checkbox' value='"+valtext+"' name='village' data-val='true' data-val-checkbox='Select alteast one village'/>"+valtext );
+                    //$("village-select").append();
+                });
+
+                 $("form").removeData("validator").removeData("unobtrusiveValidation");
+ 
+                $.validator.unobtrusive.parse("form");
+            }
+        })
+    });
+});
+
+$("document").ready(function(){
+
+    $("form").submit(function  (e) {
+        
+        e.preventDefault();
+
+    
+        if ($("form").valid()) {
+
+
+            var role = document.getElementById("user_role").value; 
+            //alert(role);         
+            var userid=document.getElementById("id_user_id").value;
+            //alert(userid);
+            var ufname=document.getElementById("id_user_fname").value;
+            //alert(ufname);
+            var lname=document.getElementById("id_user_lname").value;
+            //alert(lname);
+            var upwd=document.getElementById("id_user_pwd").value;
+            //alert(upwd);
+            var pnum=document.getElementById("id_user_phnum").value;
+            //alert(pnum);
+            var mail=document.getElementById("id_user_email").value;
+            //alert(mail);
+            var ctry=document.getElementById("country").value;
+            //alert(ctry);
+            var cty=document.getElementById("id_county_name").value;
+            //alert(cty);
+            var dist=document.getElementById("id_district_name").value;
+            //alert(dist);
+            var sub_dist=document.getElementById("id_subdistrict_name").value;
+            //alert(sub_dist);
+            var sub_ctr=document.getElementById("id_sub_center").value;
+            //alert(sub_ctr);
+            var hosp=document.getElementById("id_hosp_name").value;
+            //alert(hosp);
+
+            var villages = [];
+            $.each($("input[name='village']:checked"), function(){ 
+                //alert(villages.push($(this).val()))           
+                villages.push($(this).val());
+            });
+            villages=villages.join(",")
+           
+        //debugger;
+            // var active = [];
+            // $.each($("input[name='status']:checked"), function(){
+            //     active.push($(this).val());
+            // });
+var active=document.getElementById('status').checked==true ? "true" :"false";
+
+            $.ajax({
+                url: "/saveusermaintenance/?userrole="+role +"&userid="+ userid +"&first_name="+ ufname +"&last_name="+lname+"&password="+ upwd +"&mobile="+ pnum+"&village="+ villages + "&email="+ mail +"&country_name="+ ctry + "&county_name="+ cty + "&district_name="+ dist +"&subdistrict_name="+ sub_dist+"&subcenter_name="+ sub_ctr + "&hospitals="+hosp+"&active="+active,
+                type: "GET",
+                dataType: "json",
+                success: function(result){
+                    
+                    if (result.error){
+                    
+                    for (var key in result.response.keys()){
+                        $("#id_"+key).after("<p class='error'>"+result.response[key]+"</p>")
+                    }
+
+                }else{
+                    
+                    window.location='/admin/Masters/usermasters/';
+                }
+                }
+            });
+        }    
+            //}  
+    });
+
+    $("#advance-cancel-button").on('click', function(){
+        window.location="/admin/Masters/usermasters/";
+    });
+})
+
+function switchControls(val)
+{
+switch(val) {
+    case "ANM":
+     $.validator.defaults.ignore = ":hidden";
+     
+     
+        document.getElementById("dv-sub_center").style.display="";
+        document.getElementById("dv-village").style.display="";
+        document.getElementById("dv-hosp").style.display="none";
+        document.getElementById("country-span").style.display="";
+        document.getElementById("county-span").style.display="";
+        document.getElementById("district-span").style.display="";
+        document.getElementById("subdistrict-span").style.display="";
+                // $("form").removeData("validator").removeData("unobtrusiveValidation");
+ 
+        //         $.validator.unobtrusive.parse("form");
+        // // $.validator.unobtrusive.parse("form");      
+        //  $('form').validate();
+         
+        break;
+    case "DOC":
+    // $.validator.unobtrusive.defaults.ignore = ":hidden,#id_county_name,#id_district_name,#id_subdistrict_name";
+
+    
+        document.getElementById("dv-sub_center").style.display="none";
+        document.getElementById("dv-village").style.display="none";
+        document.getElementById("dv-hosp").style.display="";  
+        document.getElementById("country-span").style.display="none";
+        document.getElementById("county-span").style.display="none";
+        document.getElementById("district-span").style.display="none";
+        document.getElementById("subdistrict-span").style.display="none";
+                // $.validator.unobtrusive.parse("form");
+                //  $('form').validate();
+       // var validator = $.data( 'form', "validator");
+         // $.data($('form').get(0), 'validator').settings.ignore = '#id_county_name';
+         //  $.validator.unobtrusive.parse("form");      
+        break;
+    default:
+        break;
+}
+}
+</script> 
+
+</body>
+</html>

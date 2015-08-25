@@ -145,6 +145,26 @@ class SchemaVersion(models.Model):
         managed = False
         db_table = 'schema_version'
 
+
+"""class ServiceProvided(models.Model):
+    id = models.IntegerField(primary_key=True)  # AutoField?
+    service_provider = models.ForeignKey(DimServiceProvider, db_column='service_provider')
+    externalid = models.CharField(max_length=100)
+    indicator = models.ForeignKey(DimIndicator, db_column='indicator')
+    location = models.IntegerField()
+    date_field = models.ForeignKey(DimLocation, db_column='date_', blank=True, null=True)  # Field renamed because it ended with '_'.
+    dristhi_entity_id = models.CharField(max_length=100, blank=True)
+
+    class Meta:
+        managed = False
+        db_table = 'service_provided'
+    def __unicode__(self):
+        return unicode(self.service_provider)
+    def __unicode__(self):
+        return unicode(self.indicator)
+    def __unicode__(self):
+        return unicode(self.date_field)"""
+
 class AuthGroup(models.Model):
     #id = models.IntegerField(primary_key=True)  # AutoField?
     name = models.CharField(unique=True, max_length=80)
@@ -336,7 +356,6 @@ class Token(models.Model):
 
 
 class DrugInfo(models.Model):
-   
     ANC = (('Pallor', 'Pallor'),
                ('Swelling / Edema', 'Swelling / Edema'),
                ('Bleeding', 'Bleeding'),
@@ -369,25 +388,23 @@ class DrugInfo(models.Model):
     frequency = models.ForeignKey('Frequency', db_column='frequency',null=True,blank=True,limit_choices_to={'active': True},on_delete=models.SET_NULL)
     dosage = models.ForeignKey('Dosage', db_column='dosage',null=True,blank=True,limit_choices_to={'active': True},on_delete=models.SET_NULL)
     direction = models.ForeignKey('Directions', db_column='direction',null=True,blank=True,limit_choices_to={'active': True},on_delete=models.SET_NULL)
-    anc_conditions = MultiSelectField(choices=ANC,null=True,blank=True)
-    pnc_conditions = MultiSelectField(choices=PNC,null=True,blank=True)
-    child_illness = MultiSelectField(choices=CHILD,null=True,blank=True)
     active = models.BooleanField(default=True)
+    anc_conditions = MultiSelectField(choices=ANC,blank=True, null=True)
+    pnc_conditions = MultiSelectField(choices=PNC,blank=True, null=True)
+    child_illness = MultiSelectField(choices=CHILD,blank=True, null=True)
 
     class Meta:
         managed = False
         db_table = 'drug_info'
         verbose_name_plural="DRUG INFO"
-        verbose_name='DRUG INFO'
+	verbose_name='DRUG INFO'
     def __unicode__(self):
         return self.drug_name
 
-
-    
 class Frequency(models.Model):
     #id = models.IntegerField(primary_key=True)  # AutoField?
-    number_of_times = models.CharField(max_length=100)
     active = models.BooleanField(default=True)
+    number_of_times = models.CharField(max_length=100)
 
     class Meta:
         managed = False
@@ -535,39 +552,43 @@ class PocBackup(models.Model):
         managed = False
         db_table = 'poc_backup'
 
-class UserMasters(models.Model):
-    #id = models.IntegerField(primary_key=True)  # AutoField?
-    user_role = models.CharField(max_length=200)
-    user_id = models.CharField(unique=True, max_length=200)
-    name = models.CharField(max_length=200)
-    password = models.CharField(max_length=200)
-    confirm_password = models.CharField(max_length=200)
-    phone_number = models.CharField(max_length=20)
-    email = models.CharField(max_length=200)
-    country = models.CharField(max_length=200)
-    county = models.CharField(max_length=200)
-    district = models.CharField(max_length=200)
-    subdistrict = models.CharField(max_length=200)
-    subcenter = models.CharField(max_length=200)
-    villages = models.CharField(max_length=200)
-    hospital = models.CharField(max_length=100)
+class UserMaintenance(models.Model):
+    #id = models.IntegerField(unique=True,primary_key=True)
+    # USER_ROLE = (('ROLE_USER','ANM'),('ROLE_PHC_USER','PHC'),('ROLE_DOC_USER','DOC'))
+    user_role = models.CharField(max_length=100)
+    user_id = models.CharField(max_length=100)
+    #user_name = models.CharField(max_length=200)
+    firstname = models.CharField(max_length=200)
     lastname = models.CharField(max_length=200)
-    active = models.BooleanField(default=True)
+    password = models.CharField(max_length=200)
+    hospital = models.CharField(max_length=100)
+    mobile = models.IntegerField()
+    email = models.CharField(max_length=150)
+    village = models.CharField(max_length=100)
+    status = models.BooleanField()
+    pnc = models.BooleanField()
+    anc = models.BooleanField()
+    ec = models.BooleanField()
+    child = models.BooleanField()
+    fp = models.BooleanField()
 
     class Meta:
-        managed = False
-        db_table = 'user_masters'
         verbose_name_plural="USER MAINTENANCE"
+        managed = False
+        db_table = 'user_maintenance'
         verbose_name="USER MAINTENANCE"
 
     def __unicode__(self):
         return self.user_id
 
+    def save(self, *args, **kwargs):
+        m = hashlib.sha1()
+        m.update(self.password)
+        self.password = m.hexdigest()
+        super(UserMaintenance, self).save(*args, **kwargs)
 
-@receiver(post_save, sender=UserMasters)
+@receiver(post_save, sender=UserMaintenance)
 def usermaintenance_post(sender,instance,**kwargs):
-    user_role = settings.USER_ROLE[str(instance.user_role)]
-    #print 
     user_curl = "curl -s -H -X GET http://202.153.34.169:5984/drishti/_design/DrishtiUser/_view/by_username?key="+"%22"+str(instance.user_id)+"%22"
     user_data = commands.getoutput(user_curl) 
     output = json.loads(user_data)
@@ -579,11 +600,12 @@ def usermaintenance_post(sender,instance,**kwargs):
         rev_data = commands.getoutput(rev_curl)
         rev_data = dict(json.loads(rev_data))
         delet_curl = "curl -X DELETE http://202.153.34.169:5984/drishti/"+id_val['id']+"/?rev\="+rev_data['_rev']
-        user_data = commands.getoutput(delet_curl)
-    cmd = '''curl -s -H Content-Type:application/json -d '{"docs": [{"type": "DrishtiUser","username": "%s","password": "%s","active": true,"roles": ["%s"]  } ]}' -X POST http://202.153.34.169:5984/drishti/_bulk_docs''' %(str(instance.user_id),str(instance.password),str(user_role))
+        user_data = commands.getoutput(delet_curl) 
+    user_pwd=DimUserLogin.objects.filter(name=str(instance)).values_list('password')
+    cmd = '''curl -s -H Content-Type:application/json -d '{"docs": [{"type": "DrishtiUser","username": "%s","password": "%s","active": true,"roles": ["%s"]  } ]}' -X POST http://202.153.34.169:5984/drishti/_bulk_docs''' %(str(instance.user_id),str(instance.password),str(instance.user_role))
     res = commands.getstatusoutput(cmd)
     
-post_save.connect(usermaintenance_post,sender=UserMasters)
+post_save.connect(usermaintenance_post,sender=UserMaintenance)
 
 class HospitalDetails(models.Model):
 #    id = models.IntegerField(primary_key=True)  # AutoField?
@@ -616,9 +638,7 @@ class HospitalType(models.Model):
 
 class CountryTb(models.Model):
     #id = models.IntegerField(primary_key=True)  # AutoField?
-    country_name = models.CharField(max_length=100)
-    country_code=models.CharField(max_length=10)
-    active = models.BooleanField(default=True)
+    country_name = models.CharField(max_length=100,unique=True)
 
     class Meta:
         verbose_name_plural="COUNTRY"
@@ -629,10 +649,9 @@ class CountryTb(models.Model):
         return self.country_name
 
 class CountyTb(models.Model):
-    # id = models.IntegerField(primary_key=True)  # AutoField?
-    country_name = models.ForeignKey(CountryTb, db_column='country_name',limit_choices_to={'active': True})
-    county_name = models.CharField(max_length=100,unique=True)
-    active = models.BooleanField(default=True)
+    id = models.IntegerField(primary_key=True)  # AutoField?
+    country_name = models.ForeignKey(CountryTb, db_column='country_name')
+    county_name = models.CharField(max_length=100, blank=True)
 
 
     class Meta:
@@ -643,17 +662,37 @@ class CountyTb(models.Model):
     def __unicode__(self):
         return self.county_name
 
+class DistrictTb(models.Model):
+    country_name = models.ForeignKey(CountryTb, db_column='country_name'),
+    county_name = ChainedForeignKey(
+        CountyTb,
+        chained_field="country_name",
+        chained_model_field="country_name",
+        show_all=False,
+        auto_choose=True
+    )
+    district_name = models.CharField(max_length=100)
+
+
+    #county_name = models.ForeignKey(CountyTb, db_column='county_name')
+    #district_name = models.CharField(max_length=-1)
+
+    class Meta:
+        verbose_name_plural="DISTRICT"
+        managed = False
+        db_table = 'district_tb'
+        verbose_name="DISTRICT"
+    def __unicode__(self):
+        return self.district_name
+
 class Disttab(models.Model):
     #id = models.IntegerField(primary_key=True)  # AutoField?
     country_name = models.CharField(max_length=100)
     county_name = models.CharField(max_length=100)
     district_name = models.CharField(unique=True, max_length=100)
-    active = models.BooleanField(default=True)
 
     class Meta:
         managed = False
-        verbose_name_plural="DISTRICT"
-        verbose_name="DISTRICT"
         db_table = 'disttab'
 
 class SubdistrictTab(models.Model):
@@ -662,12 +701,9 @@ class SubdistrictTab(models.Model):
     county = models.CharField(max_length=100, blank=True)
     district = models.CharField(max_length=100, blank=True)
     subdistrict = models.CharField(unique=True, max_length=100, blank=True)
-    active = models.BooleanField(default=True)
 
     class Meta:
         managed = False
-        verbose_name_plural="SUBDISTRICT"
-        verbose_name="SUBDISTRICT"
         db_table = 'subdistrict_tab'
 
 class LocationTab(models.Model):
@@ -677,16 +713,33 @@ class LocationTab(models.Model):
     district = models.CharField(max_length=100, blank=True)
     subdistrict = models.CharField(max_length=100, blank=True)
     location = models.CharField(unique=True, max_length=100, blank=True)
-    active = models.BooleanField(default=True)
 
     class Meta:
         managed = False
-        verbose_name_plural="LOCATIONS"
-        verbose_name="LOCATIONS"
         db_table = 'location_tab'
 
+# class UserMasters(models.Model):
+#     #id = models.IntegerField(primary_key=True)  # AutoField?
+#     user_role = models.CharField(max_length=200)
+#     user_id = models.CharField(unique=True, max_length=200)
+#     firstname = models.CharField(max_length=200)
+#     password = models.CharField(max_length=200)
+#     confirm_password = models.CharField(max_length=200)
+#     phone_number = models.DecimalField(max_digits=65535, decimal_places=65535)
+#     email = models.CharField(max_length=200)
+#     country = models.CharField(max_length=200)
+#     county = models.CharField(max_length=200)
+#     district = models.CharField(max_length=200)
+#     subdistrict = models.CharField(max_length=200)
+#     subcenter = models.CharField(max_length=200)
+#     villages = models.CharField(max_length=200)
+#
+#     class Meta:
+#         managed = False
+#         db_table = 'user_masters'
+
 class HealthCenters(models.Model):
-    #id = models.IntegerField(unique=True,primary_key=True)
+#    id = models.IntegerField(unique=True)
     hospital_name = models.CharField(max_length=200)
     hospital_type = models.CharField(max_length=200)
     hospital_address = models.CharField(max_length=200)
@@ -697,38 +750,29 @@ class HealthCenters(models.Model):
     location = models.CharField(max_length=200)
     parent_hospital = models.CharField(max_length=200)
     villages = models.CharField(max_length=200)
-    active = models.BooleanField(default=True)
 
     class Meta:
         managed = False
-        verbose_name_plural="HEALTHCENTERS"
         db_table = 'health_centers'
-        verbose_name= 'HEALTHCENTERS'
 
-class AppConfiguration(models.Model):
-    TEMP = (("celsius","Celsius"),
-            ("farenheit","Farenheit"))
-    #id = models.IntegerField(primary_key=True)  # AutoField?
-    country_name = models.ForeignKey(CountryTb, db_column='country_name',limit_choices_to={'active': True})
-    wifeagemin = models.PositiveIntegerField()
-    wifeagemax = models.PositiveIntegerField()
-    husbandagemin = models.PositiveIntegerField()
-    husbandagemax = models.IntegerField()
-    temperature = models.CharField(max_length=20,choices=TEMP)
-
+class UserMasters(models.Model):
+#    id = models.IntegerField(primary_key=True)  # AutoField?
+    user_role = models.CharField(max_length=200)
+    user_id = models.CharField(unique=True, max_length=200)
+    name = models.CharField(max_length=200)
+    password = models.CharField(max_length=200)
+    confirm_password = models.CharField(max_length=200)
+    phone_number = models.CharField(max_length=20)
+    email = models.CharField(max_length=200)
+    country = models.CharField(max_length=200)
+    county = models.CharField(max_length=200)
+    district = models.CharField(max_length=200)
+    subdistrict = models.CharField(max_length=200)
+    subcenter = models.CharField(max_length=200)
+    villages = models.CharField(max_length=200)
+    hospital = models.CharField(max_length=100)
+    lastname = models.CharField(max_length=200)
 
     class Meta:
         managed = False
-        db_table = 'app_configuration'
-
-    def save(self, *args, **kwargs):
-        from django.core.exceptions import ValidationError
-        self.wifemin =self.wifeagemin
-        self.wifemax =self.wifeagemax
-        self.husbandmin =self.husbandagemin
-        self.husbandmax =self.husbandagemax
-        if self.wifemin>self.wifemax:
-            raise ValidationError("maxage error")
-        elif self.husbandmin>self.husbandmax:
-            raise ValidationError("maxage error")
-        super(AppConfiguration, self).save(*args, **kwargs)
+        db_table = 'user_masters'
