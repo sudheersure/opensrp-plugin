@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en-us" >
 <head>
-<title>Edit Location details | OpenSRP </title>
+<title>Add hospital details | OpenSRP </title>
 <link rel="stylesheet" type="text/css" href="/static/admin/css/base.css" />
 
 <style>
@@ -90,6 +90,7 @@ div.submit {
 
 <script src="http://ajax.aspnetcdn.com/ajax/mvc/5.2.3/jquery.validate.unobtrusive.min.js"></script>
 
+
 <meta name="robots" content="NONE,NOARCHIVE" />
 <style type="text/css">
         #header {
@@ -132,22 +133,28 @@ div.submit {
 <div class="breadcrumbs">
 <a href="/admin/">Home</a>
 &rsaquo; <a href="/admin/Masters/">Masters</a>
-&rsaquo; <a href="/admin/Masters/locationtab/">Locations</a>
-&rsaquo; Edit Locations
+&rsaquo; <a href="/admin/Masters/disttab/">District</a>
+&rsaquo; Add District
 </div>
 
     <!-- Content -->
     <div id="content" class="colM">
 
-        <h1>Edit location details</h1>
+        <h1>Add District details</h1>
         <div id="content-main">
 
 
 
 
-<form enctype="multipart/form-data" action="" method="post" id="editlocation_form" >
+<form enctype="multipart/form-data" action="" method="post" id="countytb_form" >
     {% csrf_token %}
 <div>
+
+
+
+
+
+
 
   <fieldset class="module aligned ">
     
@@ -161,12 +168,12 @@ div.submit {
                     
                         <label class="required" for="country">Country name:<span style="color:red">&nbsp;*</span></label>
                         
-                            <select id="country" name="country_name" data-val="true" data-val-required="Country cannot be empty">
+                            <select id="country" name="country_name" value="" data-val="true" data-val-required="Counrty cannot be empty">
                             {%for x in country %}
                             <option value="{{x}}" >{{x}}</option>
                             {% endfor %}
                             </select>
-                         <span class="field-validation-valid" data-valmsg-for="country_name" data-valmsg-replace="true" ></span>
+                        <span class="field-validation-valid" data-valmsg-for="country_name" data-valmsg-replace="true" ></span>
                     
                     
                 </div>
@@ -181,12 +188,12 @@ div.submit {
                     
                         <label class="required" for="id_county_name">County name:<span style="color:red">&nbsp;*</span></label>
 
-                            <select id="id_county_name" name="county_name" value="" data-val="true" data-val-required="County cannot be empty">
+                            <select id="id_county_name" name="county_name" value="" data-val="true" data-val-required="Counrty cannot be empty">
                             {% for add in county %}
                             <option value="{{add}}">{{add}}</option>
                             {% endfor %}
-                       </select>
-                         <span class="field-validation-valid" data-valmsg-for="county_name" data-valmsg-replace="true" ></span>
+                            </select>
+                        <span class="field-validation-valid" data-valmsg-for="county_name" data-valmsg-replace="true" ></span>
                     
                     
                 </div>
@@ -199,61 +206,19 @@ div.submit {
 
 
                         <label class="required" for="id_district_name">District name:<span style="color:red">&nbsp;*</span></label>
-
-                            <select id="id_district_name" name="district_name" value=""  data-val="true" data-val-required="District cannot be empty" >
-                            {% for d in district %}
-                            <option value="{{d}}">{{d}}</option>
-                            {% endfor %}
-                       </select>
-                       
- <span class="field-validation-valid" data-valmsg-for="district_name" data-valmsg-replace="true" ></span>
+                        <input type="hidden" name="id" value="0" id="hdID" />
+                            <input class="vTextField" id="id_district_name" name="dname" value="{{district}}" data-val="true" data-val-required="District name cannot be empty" data-val-remote-url="/districtvalidate/" data-val-remote-additionalfields="*.id,*.dname" data-val-remote="User with this id already registered"  />
+                         <span class="field-validation-valid" data-valmsg-for="dname" data-valmsg-replace="true" ></span>
 
 
 
                 </div>
 
         </div>
-        <div class="form-row field-sub_district_name">
 
-
-                <div>
-
-
-                        <label class="required" for="id_subdistrict_name">Sub-District name:<span style="color:red">&nbsp;*</span></label>
-
-                            <select id="id_subdistrict_name" name="subdistrict_name" value="" data-val="true" data-val-required="Sub District cannot be empty">
-                            {% for s in subdistrict %}
-                            <option value="{{s}}">{{s}}</option>
-                            {% endfor %}
-                       </select>
-                       
- <span class="field-validation-valid" data-valmsg-for="subdistrict_name" data-valmsg-replace="true" ></span>
-
-
-                </div>
-
-        </div>
-
-        <div class="form-row field-location-name">
-
-
-                <div>
-
-
-                        <label class="required" for="id_location_name">Location name:<span style="color:red">&nbsp;*</span></label>
-                        <input type="hidden" value="0" name="id" id="hdID">
-                              <input class="vTextField" id="id_location_name" name="lname" value="{{location}}" data-val="true" data-val-required="Location name cannot be empty"  data-val-regex="Only characters allowed" data-val-regex-pattern="^[a-zA-Z ]*$" data-val-remote-url="/locationvalidate/" data-val-remote-additionalfields="*.id,*.lname" data-val-remote="Location with this name already registered"/>
-                        <span class="field-validation-valid" data-valmsg-for="lname" data-valmsg-replace="true"></span>
-                       
-
-
-
-                </div>
-
-        </div>
         <div class="form-row field-status">
                 <div class="checkbox-row">
-                        <input  id="status" name="status" type="checkbox" value="{{active}}"/>
+                        <input id="status" name="status" type="checkbox" value="{{active}}"/>
                         <label class="vCheckboxLabel" for="id_status">active</label> 
                 </div>
             
@@ -263,11 +228,9 @@ div.submit {
 
 </div>
 
-
-
 <div class="submit-row">
 <button type="submit" class="btn btn-success" id="advance-save-button">save</button>
-<button type="button" class="btn btn-success" id="advance-cancel-button" onclick="window.location='/admin/Masters/locationtab/'">cancel</button>
+<button type="button" class="btn btn-success" id="advance-cancel-button" onclick="window.location='/admin/Masters/disttab/'">cancel</button>
 </div>
 
 </form></div>
@@ -292,7 +255,7 @@ function GetRecordId(words) {
     return n[n.length-2];
 
 }
- $("document").ready(function(){
+$("document").ready(function(){
 
     $("#hdID").val(GetRecordId(window.location.pathname));
     $('#status').val()=='true' ?  $('#status').attr('checked','checked') :  $('#status').removeAttr('checked');
@@ -306,8 +269,6 @@ function GetRecordId(words) {
             dataType: "json",
             success: function(result){
                 $('#id_county_name').empty();
-                $('#id_district_name').empty();
-                $('#id_subdistrict_name').empty();
                 $("#id_county_name").append($('<option value="">select</option>'))                
 
                 $.each(result.res, function(key, valtext){
@@ -319,99 +280,43 @@ function GetRecordId(words) {
             }
         })
     });
-//});
-
- //$("document").ready(function(){
-    $("#id_county_name").on('change', function(e){
-        var county = $(e.currentTarget).val();
-        //alert(county)
-        $.ajax({
-            url:"/district/?county_name="+ county,
-            type: "GET",
-            dataType: "json",
-            success: function(result){
-                $('#id_district_name').empty();
-                 $('#id_subdistrict_name').empty();
-                $("#id_district_name").append($('<option value="">select</option>'))
-                $.each(result.res, function(key, valtext){
-                    $('#id_district_name').append($('<option>', {
-                        value: valtext,
-                        text : valtext
-                    }));
-                });
-            }
-        })
-    });
-//});
-
- //$("document").ready(function(){
-    $("#id_district_name").on('change', function(e){
-        var district = $(e.currentTarget).val();
-        //alert(district)
-        $.ajax({
-            url:"/subdistrict/?district_name="+ district,
-            type: "GET",
-            dataType: "json",
-            success: function(result){
-                $('#id_subdistrict_name').empty();
-               $("#id_subdistrict_name").append($('<option value="">select</option>'))
-                $.each(result.res, function(key, valtext){
-                    $('#id_subdistrict_name').append($('<option>', {
-                        value: valtext,
-                        text : valtext
-                    }));
-                });
-            }
-        })
-    });
 });
-
 
 $("document").ready(function(){
 
         $("form").submit(function  (e) {
         // body...
         e.preventDefault();
-
         if ($("form").valid()) {
-            
-                
             var country = $("select[name=country_name]").val();
-            //alert(country)
+           
             var county = $("select[name=county_name]").val();
-            //alert(county)
-            var district = $("select[name=district_name]").val();
-            //alert(district)
-            var subdistrict = $("select[name=subdistrict_name]").val();
-            //alert(subdistrict)
-            var location = document.getElementById("id_location_name").value;
-            //alert(location)
+            
+            var district = document.getElementById("id_district_name").value;
             var active=document.getElementById('status').checked==true ? "true" :"false";
             $.ajax({
 
-                url: "/updatelocation/?country="+ country +"&county="+ county +"&district="+ district+"&subdistrict="+ subdistrict+"&location="+ location+"&active="+active,
+                url: "/updatedistrict/?country="+ country +"&county="+ county +"&district="+ district+"&active="+active,
                 type: 'GET',
                 acceptType: "json",
                 success: function (result) {
                 if (result.error){
-                    // $("p.error").remove();
-                    //alert('hi');
+                    
                     for (var key in result.response.keys()){
                         $("#id_"+key).after("<p class='error'>"+result.response[key]+"</p>")
                     }
 
                 }else{
-                    //top.location.href = result.redirect;
-                    //alert('district');
-                    window.location='/admin/Masters/locationtab/';
+                   
+                    window.location='/admin/Masters/disttab/';
                 }
                 }
 
             });
-
-        }
-       
+            }
         });
+
+       
 })
 </script>
 

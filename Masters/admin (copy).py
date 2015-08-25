@@ -9,7 +9,8 @@ from collections import defaultdict
 
 class DimAnmAdmin(admin.ModelAdmin):
     list_display = ('anmidentifier','phc','subcenter','name',)
-    search_fields = ('anmidentifier','phc__name',)
+    search_fields = ('anmidentifier','phc__name','subcenter','name',)
+    list_filter = ('phc','subcenter',)
 
     def get_actions(self, request):
         actions = super(DimAnmAdmin, self).get_actions(request)
@@ -21,7 +22,8 @@ class DimAnmAdmin(admin.ModelAdmin):
 
 class DimIndicatorAdmin(admin.ModelAdmin):
     list_display = ('indicator',)
-    search_fields = ('indicator',)
+    list_filter = ('indicator','active',)
+    search_fields = ('indicator','active',)
 
     def get_actions(self, request):
         actions = super(DimIndicatorAdmin   , self).get_actions(request)
@@ -31,9 +33,23 @@ class DimIndicatorAdmin(admin.ModelAdmin):
     def has_delete_permission(self, request, obj=None):
         return False
 
+class DimLocationAdmin(admin.ModelAdmin):
+    list_display = ('village','subcenter','phc','taluka','district','state',)
+    search_fields = ('village','subcenter','phc__name','taluka','district','state',)
+    list_filter = ('village','subcenter',)
+
+    def get_actions(self, request):
+        actions = super(DimLocationAdmin, self).get_actions(request)
+        del actions['delete_selected']
+        return actions
+    
+    def has_delete_permission(self, request, obj=None):
+        return False
+
 class DimPhcAdmin(admin.ModelAdmin):
     list_display = ('phcidentifier','name',)
-    search_fields = ('phcidentifier','name',)
+    search_fields = ('phcidentifier','name','active',)
+    list_filter = ('name',)
 
     def get_actions(self, request):
         actions = super(DimPhcAdmin, self).get_actions(request)
@@ -45,7 +61,8 @@ class DimPhcAdmin(admin.ModelAdmin):
 
 class DimServiceProviderAdmin(admin.ModelAdmin):
     list_display = ('service_provider','type',)
-    search_fields = ('service_provider','type__type',)
+    search_fields = ('service_provider','type__type','active',)
+    list_filter = ('type',)
 
     def get_actions(self, request):
         actions = super(DimServiceProviderAdmin, self).get_actions(request)
@@ -61,7 +78,8 @@ class DimServiceProviderAdmin(admin.ModelAdmin):
 
 class DimServiceProviderTypeAdmin(admin.ModelAdmin):
     list_display = ('type',)
-    search_fields = ('type',)
+    search_fields = ('type','active',)
+    list_filter = ('type',)
 
     def get_actions(self, request):
         actions = super(DimServiceProviderTypeAdmin, self).get_actions(request)
@@ -81,7 +99,8 @@ class DimServiceProviderTypeAdmin(admin.ModelAdmin):
 class DimUserLoginAdmin(admin.ModelAdmin):
     form = UserInfoForm
     list_display = ('name','user_role',)
-    search_fields = ('name','user_role__type',)
+    search_fields = ('name','user_role__type','active',)
+    list_filter = ('name','user_role',)
 
     def get_actions(self, request):
         actions = super(DimUserLoginAdmin, self).get_actions(request)
@@ -92,8 +111,9 @@ class DimUserLoginAdmin(admin.ModelAdmin):
         return False
 
 class DrugInfoAdmin(admin.ModelAdmin):
-    list_display= ('drug_name','frequency','dosage','direction','active',)
-    search_fields = ('drug_name',)
+    list_display= ('drug_name','frequency','dosage','direction','anc_conditions','pnc_conditions','child_illness',)
+    search_fields = ('drug_name','frequency__number_of_times','dosage__dosage','direction__directions','active',)
+    list_filter = ('drug_name',)
 
     def get_actions(self, request):
         actions = super(DrugInfoAdmin, self).get_actions(request)
@@ -106,7 +126,8 @@ class DrugInfoAdmin(admin.ModelAdmin):
             
 class FrequencyAdmin(admin.ModelAdmin):
     list_display = ('number_of_times','active',)
-    search_fields = ('number_of_times',)
+    list_filter = ('active',)
+    search_fields = ('number_of_times','active',)
 
     def get_actions(self, request):
         actions = super(FrequencyAdmin, self).get_actions(request)
@@ -118,7 +139,8 @@ class FrequencyAdmin(admin.ModelAdmin):
 
 class DosageAdmin(admin.ModelAdmin):
     list_display = ('dosage','active',)
-    search_fields = ('dosage',)
+    search_fields = ('dosage','active')
+    list_filter = ('dosage',)
 
     def get_actions(self, request):
         actions = super(DosageAdmin, self).get_actions(request)
@@ -131,7 +153,8 @@ class DosageAdmin(admin.ModelAdmin):
 
 class DirectionsAdmin(admin.ModelAdmin):
     list_display = ('directions','active',)
-    search_fields = ('directions',)
+    search_fields = ('directions','active',)
+    list_filter = ('directions',)
 
     def get_actions(self, request):
         actions = super(DirectionsAdmin, self).get_actions(request)
@@ -143,7 +166,8 @@ class DirectionsAdmin(admin.ModelAdmin):
 
 class ICD10Admin(admin.ModelAdmin): 
     list_display = ('ICD10_Chapter','ICD10_Code','ICD10_Name','can_select','status')
-    search_fields = ('ICD10_Chapter','ICD10_Code','ICD10_Name',)
+    search_fields = ('ICD10_Chapter','ICD10_Code','ICD10_Name','can_select','status','active',)
+    list_filter = ('ICD10_Code','ICD10_Chapter','ICD10_Name',)
 
     def get_actions(self, request):
         actions = super(ICD10Admin, self).get_actions(request)
@@ -156,6 +180,7 @@ class ICD10Admin(admin.ModelAdmin):
 class InvestigationAdmin(admin.ModelAdmin):
     list_display = ('service_group_name','investigation_name','is_active',)
     search_fields = ('service_group_name','investigation_name','is_active',)
+    list_filter = ('service_group_name',)
 
     def get_actions(self, request):
         actions = super(InvestigationAdmin, self).get_actions(request)
@@ -167,7 +192,8 @@ class InvestigationAdmin(admin.ModelAdmin):
 
 class PocInfoAdmin(admin.ModelAdmin):    
     list_display = ('visitentityid','entityidec','anmid','level','clientversion','serverversion','visittype','phc','pending','docid',)
-    search_fields = ('visitentityid','entityidec','anmid',)
+    search_fields = ('visitentityid','entityidec','anmid','level','clientversion','serverversion','visittype','phc','pending','docid',)
+    list_filter = ('anmid','level','clientversion','serverversion','phc')
 
     def get_actions(self, request):
         actions = super(PocInfoAdmin, self).get_actions(request)
@@ -179,7 +205,8 @@ class PocInfoAdmin(admin.ModelAdmin):
 
 class DocInfoAdmin(admin.ModelAdmin):
     list_display= ('docname','phc',)
-    search_fields = ('docname',)
+    search_fields = ('docname','phc__name','active')
+    list_filter = ('docname','phc__name',)
 
     def get_actions(self, request):
         actions = super(DocInfoAdmin, self).get_actions(request)
@@ -189,10 +216,29 @@ class DocInfoAdmin(admin.ModelAdmin):
     def has_delete_permission(self, request, obj=None):
         return False
         
+class HospitalDetailsAdmin(admin.ModelAdmin):
+    list_display = ('country','hospital_name','hospital_type','parent_hospital','address','village','status',)
+
+    def get_urls(self):
+        urls = super(HospitalDetailsAdmin, self).get_urls()
+        my_urls = patterns('',
+                url(r'add/$', 'Masters.views.admin_hospital',name='hospital'),
+                url(r'gettype/$', 'Masters.views.get_hospital',name='hospital'),
+                url(r'(?P<hospital_id>\d+)/$', 'Masters.views.edit_hospital',name='edithospital'),
+                )
+        return my_urls + urls
+
+    def get_actions(self, request):
+        actions = super(HospitalDetailsAdmin, self).get_actions(request)
+        del actions['delete_selected']
+        return actions
+
+    def has_delete_permission(self, request, obj=None):
+        return False
+
 class UserMaintenanceAdmin(admin.ModelAdmin):
     form = UserMaintenaceForm
-    list_display = ('user_id','user_role','name','phone_number','email','country','county','district','subdistrict','subcenter','hospital','villages','active')
-    search_fields = ('user_id',)
+    list_display = ('user_id','user_role','firstname','lastname','hospital','mobile','email','village','status',)
 
     def get_urls(self):
         urls = super(UserMaintenanceAdmin, self).get_urls()
@@ -202,7 +248,6 @@ class UserMaintenanceAdmin(admin.ModelAdmin):
 
                 url(r'(?P<batch_id>\d+)/$','Masters.views.edit_usermaintenance',name='editusermaintenance'),
                 )
-        
         return my_urls + urls
 
     def get_actions(self, request):
@@ -214,8 +259,7 @@ class UserMaintenanceAdmin(admin.ModelAdmin):
         return False
 
 class CountryAdmin(admin.ModelAdmin):
-    list_display=('country_name','country_code','active',)
-    search_fields = ('country_name',)
+    list_display=('country_name',)
 
     def get_actions(self, request):
         actions = super(CountryAdmin, self).get_actions(request)
@@ -226,8 +270,7 @@ class CountryAdmin(admin.ModelAdmin):
         return False
 
 class CountyAdmin(admin.ModelAdmin):
-    list_display = ('county_name','country_name','active',)
-    search_fields = ('county_name',)
+    list_display = ('county_name',)
 
     def get_actions(self, request):
         actions = super(CountyAdmin, self).get_actions(request)
@@ -237,9 +280,19 @@ class CountyAdmin(admin.ModelAdmin):
     def has_delete_permission(self, request, obj=None):
         return False
 
+class DistrictAdmin(admin.ModelAdmin):
+    #list_display = ('country_name','county_name','district_name')
+
+    def get_actions(self, request):
+        actions = super(DistrictAdmin, self).get_actions(request)
+        del actions['delete_selected']
+        return actions
+
+    def has_delete_permission(self, request, obj=None):
+        return False
+
 class DisttabAdmin(admin.ModelAdmin):
-    list_display = ('district_name','county_name','country_name','active')
-    search_fields = ('district_name',)
+    list_display = ('country_name','county_name','district_name',)
 
     def get_urls(self):
         urls = super(DisttabAdmin, self).get_urls()
@@ -251,17 +304,8 @@ class DisttabAdmin(admin.ModelAdmin):
                 )
         return my_urls + urls
 
-    def get_actions(self, request):
-        actions = super(DisttabAdmin, self).get_actions(request)
-        del actions['delete_selected']
-        return actions
-
-    def has_delete_permission(self, request, obj=None):
-        return False
-
 class SubdistrictTabAdmin(admin.ModelAdmin):
-    list_display = ('subdistrict','district','county','country','active',)
-    search_fields = ('subdistrict',)
+    list_display = ('country','county','district','subdistrict',)
 
     def get_urls(self):
         urls = super(SubdistrictTabAdmin, self).get_urls()
@@ -273,17 +317,8 @@ class SubdistrictTabAdmin(admin.ModelAdmin):
                 )
         return my_urls + urls
 
-    def get_actions(self, request):
-        actions = super(SubdistrictTabAdmin, self).get_actions(request)
-        del actions['delete_selected']
-        return actions
-
-    def has_delete_permission(self, request, obj=None):
-        return False
-
 class LocationTabAdmin(admin.ModelAdmin):
-    list_display = ('location','subdistrict','district','county','country','active',)
-    search_fields = ('location',)
+    list_display = ('country','county','district','subdistrict','location',)
 
     def get_urls(self):
         urls = super(LocationTabAdmin, self).get_urls()
@@ -295,62 +330,26 @@ class LocationTabAdmin(admin.ModelAdmin):
                 )
         return my_urls + urls
 
-    def get_actions(self, request):
-        actions = super(LocationTabAdmin, self).get_actions(request)
-        del actions['delete_selected']
-        return actions
-
-    def has_delete_permission(self, request, obj=None):
-        return False
-
-
-class HealthCenterAdmin(admin.ModelAdmin):
-    list_display = ('hospital_name','hospital_type','hospital_address','country_name','county_name','district_name','subdistrict_name','parent_hospital','villages','active')
-    search_fields = ('hospital_name',)
-
-    def get_urls(self):
-        urls = super(HealthCenterAdmin, self).get_urls()
-        my_urls = patterns('',
-                url(r'add/$', 'Masters.views.admin_hospital',name='hospital'),
-                url(r'gettype/$', 'Masters.views.get_hospital',name='hospital'),
-                url(r'(?P<hospital_id>\d+)/$', 'Masters.views.edit_hospital',name='edithospital'),
-                )
-        return my_urls + urls
-
-    def get_actions(self, request):
-        actions = super(HealthCenterAdmin, self).get_actions(request)
-        del actions['delete_selected']
-        return actions
-
-    def has_delete_permission(self, request, obj=None):
-        return False
-
-class AppConfigurationAdmin(admin.ModelAdmin):
-    list_display = ('wifeagemin','wifeagemax','husbandagemin','husbandagemax','temperature','country_name',)
-    search_fields = ('wifeagemin',)
-    fieldsets = (
-      (None, {
-          'fields': ('country_name','temperature')
-      }),
-      ('Wife age', {
-          'fields': ('wifeagemin','wifeagemax')
-      }),
-      ('Husband age', {
-          'fields': ('husbandagemin','husbandagemax')
-      }),
-
-   )
-
-    def get_actions(self, request):
-        actions = super(AppConfigurationAdmin, self).get_actions(request)
-        del actions['delete_selected']
-        return actions
-
-    def has_delete_permission(self, request, obj=None):
-        return False
+# class UserMastersAdmin(admin.ModelAdmin):
+#     list_display = ('user_role','user_id','firstname','phone_number','email','country','county','district','subdistrict',)
+#
+#     def get_urls(self):
+#         urls = super(UserMastersAdmin, self).get_urls()
+#         my_urls = patterns('',
+#                 url(r'add/$', 'Masters.views.adminadd_user',name='add_user'),
+#
+#
+#                 #url(r'(?P<loc_id>\d+)/$','Masters.views.edit_location',name='editlocation'),
+#                 )
+#         return my_urls + urls
 
 admin.site.register(DimAnm,DimAnmAdmin)
+#admin.site.register(DimIndicator,DimIndicatorAdmin)
+admin.site.register(DimLocation,DimLocationAdmin)
 admin.site.register(DimPhc,DimPhcAdmin)
+#admin.site.register(DimServiceProvider,DimServiceProviderAdmin)
+#admin.site.register(DimServiceProviderType,DimServiceProviderTypeAdmin)
+#admin.site.register(DimUserLogin,DimUserLoginAdmin)
 admin.site.register(DrugInfo,DrugInfoAdmin)
 admin.site.register(Frequency,FrequencyAdmin)
 admin.site.register(Dosage,DosageAdmin)
@@ -358,11 +357,13 @@ admin.site.register(Directions,DirectionsAdmin)
 admin.site.register(ICD10,ICD10Admin)
 admin.site.register(Investigations,InvestigationAdmin)
 admin.site.register(PocInfo,PocInfoAdmin)
-admin.site.register(UserMasters,UserMaintenanceAdmin)
+#admin.site.register(DocInfo,DocInfoAdmin)
+admin.site.register(HospitalDetails,HospitalDetailsAdmin)
+admin.site.register(UserMaintenance,UserMaintenanceAdmin)
 admin.site.register(CountryTb,CountryAdmin)
 admin.site.register(CountyTb,CountyAdmin)
+admin.site.register(DistrictTb,DistrictAdmin)
 admin.site.register(Disttab,DisttabAdmin)
 admin.site.register(SubdistrictTab,SubdistrictTabAdmin)
 admin.site.register(LocationTab,LocationTabAdmin)
-admin.site.register(HealthCenters,HealthCenterAdmin)
-admin.site.register(AppConfiguration,AppConfigurationAdmin)
+#admin.site.register(UserMasters,UserMastersAdmin)

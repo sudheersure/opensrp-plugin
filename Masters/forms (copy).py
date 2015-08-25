@@ -19,9 +19,10 @@ class HosForm(forms.ModelForm):
 class UserMaintenaceForm(forms.ModelForm):
     password = forms.CharField(widget=forms.PasswordInput)
     class Meta:
-        model = UserMasters
+        model = UserMaintenance
         widgets = {
         'password': forms.PasswordInput(),
 
     }
     	fields='__all__'
+

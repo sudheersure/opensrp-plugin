@@ -83,13 +83,14 @@ div.submit {
 <script type="text/javascript" src="/static/admin/js/jquery.js"></script>
 <script type="text/javascript" src="/static/admin/js/jquery.init.js"></script>
 <script type="text/javascript" src="/static/admin/js/actions.js"></script>
+<!-- <script type="text/javascript" src="http://code.jquery.com/jquery-2.1.0.min.js"></script>
+<script src="http://ajax.aspnetcdn.com/ajax/jquery.validate/1.11.1/jquery.validate.min.js"></script> -->
 <script type="text/javascript" src="https://code.jquery.com/jquery-1.8.2.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-validate/1.14.0/jquery.validate.min.js"></script>
 
 <!--added cdn for unobtrusive validation-->
 
 <script src="http://ajax.aspnetcdn.com/ajax/mvc/5.2.3/jquery.validate.unobtrusive.min.js"></script>
-<script type="text/javascript" src="/static/conditional-validation-hospital.js"></script>
 
 
 <meta name="robots" content="NONE,NOARCHIVE" />
@@ -157,58 +158,62 @@ div.submit {
 
                         <div>
                         <label class="required" for="id_hospital_name">Hospital name:<span style="color:red">&nbsp;*</span></label>
-                        <!-- <input class="vTextField" id="id_hospital_name" name="hospital_name" value="" required /> -->
-                        <input type="hidden" value="0" name="id"> 
-                        <input class="vTextField" id="id_hospital_name" name="hname"  data-val="true" data-val-required="Hospital name cannot be empty" data-val-regex="Special characters are not allowed" data-val-regex-pattern="^[^/\\~@#$%^*\&lt;>`=+|]*$"  data-val-remote-url="/hospitalvalidate/" data-val-remote-additionalfields="*.id,*.hname" data-val-remote="Hospital  with this name already registered" maxlength="30"/>
+                        <input type="hidden" value="0" name="id" id="hdID"> 
+                        <input class="vTextField" id="id_hospital_name" name="hname" value="{{edit_details.hospital_name}}" data-val="true" data-val-required="hospital name cannot be empty" data-val-regex="Special characters are not allowed" data-val-regex-pattern="^[^/\\~@#$%^*\&lt;>`=+|]*$"  data-val-remote-url="/hospitalvalidate/" data-val-remote-additionalfields="*.id,*.hname" data-val-remote="Hospital  with this name already registered" maxlength="30"/>
                         <span class="field-validation-valid" data-valmsg-for="hname" data-valmsg-replace="true" ></span>
                         </div>
+
+                        
 
         </div>
         <div class="form-row field-address">
                 <div>
 
                     <label class="required">Address :<span style="color:red">&nbsp;*</span></label>
-                    <!-- <input class="vTextField" id="id_address_name" name="address" value="" required  /> -->
-                    <input class="vTextField" id="id_address_name" name="address" value="" data-val="true" data-val-required="Address cannot be empty"  maxlength="100" />
-                        <span class="field-validation-valid" data-valmsg-for="address" data-valmsg-replace="true"></span>
-
-
+                    <input class="vTextField" id="id_address_name" name="address" value="{{edit_details.hospital_address}}" data-val="true" data-val-required="Role cannot be empty"/>
+                    <span class="field-validation-valid" data-valmsg-for="address" data-valmsg-replace="true" ></span>
                 </div>
+                
         </div>
          <div class="form-row field-country">
                   <div>
                         <label class="required" for="country">Country name:<span style="color:red">&nbsp;*</span></label>
 
+                            
                             <select id="country" name="country_name" data-val="true" data-val-required="Country cannot be empty">
-                                <option value="">select</option>
-                                {%for x in x %}
+                            <!-- <option value="">select</option> -->
+                                {%for x in country %}
+
                                 <option value="{{x}}" >{{x}}</option>
                                 {% endfor %}
                             </select>
-                             <span class="field-validation-valid" data-valmsg-for="country_name" data-valmsg-replace="true"></span>
+                             <span class="field-validation-valid" data-valmsg-for="country_name" data-valmsg-replace="true" ></span>
                 </div>
         </div>
         <div class="form-row field-county">
               <div>
                         <label class="required" for="id_county_name">County name:<!-- <span style="color:red">&nbsp;*</span> --></label>
 
-                            <select  id="id_county_name" name="county_name" value="" >
-                                <!--  <select id="id_county_name" name="county_name" value=""  data-val="true" data-val-required="County cannot be empty">
- -->
+                            <select id="id_county_name" name="county_name" value="" >
+                            {% for x in county %}
+                            <option value="{{x}}" >{{x}}</option>
+                            {% endfor %}
                        </select>
-                       <!-- <span class="field-validation-valid" data-valmsg-for="county_name" data-valmsg-replace="true" ></span> -->
-                       
+
+                      <!--  <span class="field-validation-valid" data-valmsg-for="county_name" data-valmsg-replace="true" ></span> -->
 
               </div>
         </div>
         <div class="form-row field-district_name">
                 <div>
                         <label class="required" for="id_district_name">District name:<!-- <span style="color:red">&nbsp;*</span> --></label>
-                        <select  id="id_district_name" name="district_name" value="" >
-                           <!--  <select id="id_district_name" name="district_name" value=""  data-val="true" data-val-required="District cannot be empty" > -->
+                        <select id="id_district_name" name="district_name" value=""  >
+                        {% for x in district %}
+                            <option value="{{x}}" >{{x}}</option>
+                        {% endfor %}
                         </select>
-                     <!--    <span class="field-validation-valid" data-valmsg-for="district_name" data-valmsg-replace="true" ></span> -->
-                        
+
+                      <!--   <span class="field-validation-valid" data-valmsg-for="district_name" data-valmsg-replace="true" ></span> -->
                 </div>
 
         </div>
@@ -217,12 +222,14 @@ div.submit {
 
                         <label class="required" for="id_subdistrict_name">Sub-District name:<!-- <span style="color:red">&nbsp;*</span> --></label>
 
-                            <select  id="id_subdistrict_name" name="subdistrict_name" value="" >
-                              <!--   <select id="id_subdistrict_name" name="subdistrict_name" value=""  data-val="true" data-val-required="Sub District cannot be empty"> -->
-                            </select>
+                            <select id="id_subdistrict_name" name="subdistrict_name" value="">
+                            {% for x in subdistrict %}
+                            <option value="{{x}}" >{{x}}</option>
+                            {% endfor %}
 
-                <!--    <span class="field-validation-valid" data-valmsg-for="subdistrict_name" data-valmsg-replace="true" ></span> -->
-                       
+                       </select>
+
+                      <!--  <span class="field-validation-valid" data-valmsg-for="subdistrict_name" data-valmsg-replace="true" ></span> -->
 
 
                 </div>
@@ -233,30 +240,31 @@ div.submit {
 
                         <label class="required" for="id_location_name">Village / Location:</label>
 
-                <select id="id_location_name" name="village_location" >
+                <select id="id_location_name" name="village_location" value="{{location}}" >
+                           {% for x in location %}
+                            <option value="{{x}}" >{{x}}</option>
+                            {% endfor %}
 
 	            </select>
-
+                
                 </div>
-        </div> -->
-
+        </div>
+ -->
         <div class="form-row field-hos_type">
                 <div>
 
 
                     <label class="required" for="hospitaltype">Type:<span style="color:red">&nbsp;*</span></label>
 
-                    <select id="hospitaltype" name="hospitaltype" data-val="true" data-val-required="Hospital cannot be empty">
-                        <option value="">Select</option>
-	                    <option value="Country">Country</option>
-	                    <option value="County">County</option>
-	                    <option value="District">District</option>
-                        <option value="SubDistrict">SubDistrict</option>
-                        <option value="PHC">PHC</option>
-                        <option value="Subcenter">Subcenter</option>
+                    <select id="hospitaltype" name="hospital_type" value="{{location}}" data-val="true" data-val-required="hospitaltype cannot be empty">
+                    {% for x in hostype%}
+                        <option value="{{x}}">{{x}}</option>
+                    {% endfor %}
+	                    
 	                </select>
-                     <span class="field-validation-valid" data-valmsg-for="hospitaltype" data-valmsg-replace="true" ></span>
 
+                    <span class="field-validation-valid" data-valmsg-for="hospital_type" data-valmsg-replace="true" ></span>
+                    
                 </div>
         </div>
         <div class="form-row field-parent_hospital_name">
@@ -264,10 +272,12 @@ div.submit {
 
                     <label class="required" for="parent_hospital">Parent Hospital:<span id="parenthosp-span"style="color:red">&nbsp;*</span></label>
 
-                       <select  id="parent_hospital" name="parent_hosp" data-val="true" data-val-required-cond="Parent Hospital cannot be empty" data-val-required-cond-value="hospitaltype">
-
+                       <select id="parent_hospital" name="parent_hosp" value="{{location}}" data-val="true" data-val-required="parenthospital cannot be empty">
+                       {% for p in parenthos%}
+                        <option value="{{p}}">{{p}}</option>
+                       {% endfor %}
                        </select>
-                        <span class="field-validation-valid" data-valmsg-for="parent_hosp" data-valmsg-replace="true" ></span>
+                       <span class="field-validation-valid" data-valmsg-for="parent_hosp" data-valmsg-replace="true" ></span>
 
                 </div>
         </div>
@@ -278,15 +288,16 @@ div.submit {
             <label class ="required" >Village:<span id="village-span" style="color:red">&nbsp;*</span></label>
                 <div  id='village-select' style="display:none">
 
-            <!-- <input type="checkbox"  value="village-select" name="village" id = 'villageselected'> -->
-
+               {% for v in villages%}
+               <input type="checkbox" checked="checked" value="{{v}}" name='village' id="village">
+               {{v}}
+               {% endfor %}
                </div>
-<span class="field-validation-valid" data-valmsg-for="village" data-valmsg-replace="true" ></span> 
         </div>
 
         <div class="form-row field-status">
                 <div class="checkbox-row">
-                        <input checked="checked" id="status" name="status" type="checkbox" />
+                        <input  id="status" name="status" type="checkbox" value="{{active}}" />
                         <label class="vCheckboxLabel" for="id_status">active</label> 
                 </div>
             
@@ -295,8 +306,6 @@ div.submit {
 </div>
 <div class="submit-row">
 <button type="submit" class="btn btn-success"   id="advance-save-button">save</button>
-
-
 <button type="button" class="btn btn-success" id="advance-cancel-button">cancel</button>
 </div>
 
@@ -317,40 +326,32 @@ div.submit {
 
 
 <script type="text/javascript">
-jQuery.validator.unobtrusive.adapters.add("checkbox", function (options) {
+function GetRecordId(words) {
+    var n = words.split('/');
+    return n[n.length-2];
 
-    //b-required for checkboxes
-
-    if (options.element.tagName.toUpperCase() == "INPUT" && options.element.type.toUpperCase() == "CHECKBOX") {
-
-        //setValidationValues(options, "required", true);
-
-        options.rules["required"] = true;
-
-        if (options.message) {
-
-            options.messages["required"] = options.message;
-
-        }
-
-    }
-
-});
+}
 $("document").ready(function(){
-
+$("#hdID").val(GetRecordId(window.location.pathname));
+$('#status').val()=='true' ?  $('#status').attr('checked','checked') :  $('#status').removeAttr('checked');
+console.log($('#village').val())
+debugger
+var village_val=$('#village').val();
+if (!village_val) {
+$('#village').css('display','none');
+}
     $("#country").on('change', function(e){
         var dev = $(e.currentTarget).val();
-        // alert(dev)
+        alert(dev)
         $.ajax({
             url:"/county/?country_name="+ dev,
             type: "GET",
             dataType: "json",
             success: function(result){
-              
-                 $('#id_county_name').empty();
+                $('#id_county_name').empty();
                 $('#id_district_name').empty();
                  $('#id_subdistrict_name').empty();
-                $("#id_county_name").append($('<option value="">select</option>'))
+                  $("#id_county_name").append($('<option value="">select</option>'))
                 $.each(result.res, function(key, valtext){
                     $('#id_county_name').append($('<option>', {
                         value: valtext,
@@ -360,19 +361,20 @@ $("document").ready(function(){
             }
         })
     });
+});
 
-$("#id_county_name").on('change', function(e){
+ $("document").ready(function(){
+    $("#id_county_name").on('change', function(e){
         var county = $(e.currentTarget).val();
-        //alert(county)
+        alert(county)
         $.ajax({
             url:"/district/?county_name="+ county,
             type: "GET",
             dataType: "json",
             success: function(result){
-               // $('#id_district_name').empty();
-                 $('#id_district_name').empty();
-                 $('#id_subdistrict_name').empty();
-                $("#id_district_name").append($('<option value="">select</option>'))
+                $('#id_district_name').empty();
+                $('#id_subdistrict_name').empty();
+                  $("#id_district_name").append($('<option value="">select</option>'))
                 $.each(result.res, function(key, valtext){
                     $('#id_district_name').append($('<option>', {
                         value: valtext,
@@ -382,8 +384,10 @@ $("#id_county_name").on('change', function(e){
             }
         })
     });
+});
 
- $("#id_district_name").on('change', function(e){
+ $("document").ready(function(){
+    $("#id_district_name").on('change', function(e){
         var district = $(e.currentTarget).val();
         //alert(district)
         $.ajax({
@@ -392,7 +396,7 @@ $("#id_county_name").on('change', function(e){
             dataType: "json",
             success: function(result){
                 $('#id_subdistrict_name').empty();
-                $("#id_subdistrict_name").append($('<option value="">select</option>'))
+                  $("#id_subdistrict_name").append($('<option value="">select</option>'))
                 $.each(result.res, function(key, valtext){
                     $('#id_subdistrict_name').append($('<option>', {
                         value: valtext,
@@ -402,10 +406,59 @@ $("#id_county_name").on('change', function(e){
             }
         })
     });
+});
 
-  
+//  $("document").ready(function(){
+//     $("#id_subdistrict_name").on('change', function(e){
+//         var subdistrict = $(e.currentTarget).val();
+//         //alert(subdistrict)
+//         $.ajax({
+//             url:"/location/?subdistrict_name="+ subdistrict,
+//             type: "GET",
+//             dataType: "json",
+//             success: function(result){
+//                 $('#id_location_name').empty();
+//                 $('#village-select').empty();
+//                 $.each(result.res, function(key, valtext){
+//                     $('#id_location_name').append($('<option>', {
+//                         value: valtext,
+//                         text : valtext
+//                     }));
+//                 });
+                
+//             }
+//         })
+//     });
+// });
 
-  $("#hospitaltype").on('change', function(e){
+
+ $("document").ready(function(){
+var hostype=document.getElementById('hospitaltype').value;
+document.getElementById("parenthosp-span").style.display="";  
+        if (hostype!="Country") {
+
+            if (hostype=="Subcenter") {
+                  document.getElementById("village-span").style.display="";
+                   document.getElementById("village-select").style.display=""
+
+            }
+            else
+            {
+
+              $('#village-select').empty();
+               document.getElementById("village-select").style.display="none"
+            }
+        
+
+        
+        }
+        else{
+            document.getElementById("parenthosp-span").style.display="none";
+        document.getElementById("village-span").style.display="none";
+        }
+        
+       
+    $("#hospitaltype").on('change', function(e){
 
         var country = $("select[name=country_name]").val();
         //alert(country)
@@ -415,76 +468,64 @@ $("#id_county_name").on('change', function(e){
         //alert(district)
         var subdistrict= $("select[name=subdistrict_name]").val();
         //alert(subdistrict)
-       // var location= $("select[name=village_location]").val();
+      //  var location= $("select[name=village_location]").val();
         //alert(location)
         var hostype = $(e.currentTarget).val();
-        //$('#village-select').empty();
+        $('#village-select').empty();
+        
 
         if (hostype!="Country") {
 
             if (hostype=="Subcenter") {
                   document.getElementById("village-span").style.display="";
                   document.getElementById("village-select").style.display=""
+            }else{
+ $('#village-select').empty();
             }
-            else
-            {
-                 $('#village-select').empty();
-                  document.getElementById("village-select").style.display="none"
-            }
-       document.getElementById("parenthosp-span").style.display=""; 
-         //document.getElementById("village-span").style.display="none";               
-      
+       document.getElementById("parenthosp-span").style.display="";               
 
-$.ajax({
+        $.ajax({
             url:"/parenthospital/?country="+ country+"&county="+ county+"&district="+district+"&subdistrict="+subdistrict+"&hos_type="+hostype,
             type: "GET",
             dataType: "json",
             success: function(result){
                 $('#parent_hospital').empty();
-                $('#village-select').empty();
-                $("#parent_hospital").append($('<option value="">select</option>'))
+                
                 $.each(result.res, function(key, valtext){
                     $('#parent_hospital').append($('<option>', {
                         value: valtext,
                         text : valtext
                     }));
-                 });
-                $("form").removeData("validator").removeData("unobtrusiveValidation"); 
-                $.validator.unobtrusive.parse("form");
+                    $('#village-select').empty();
                 $.each(result.village, function(key, valtext){
-                     $("#village-select").append("<input type='checkbox' value='"+valtext+"' name='village' data-val='true' data-val-checkbox='Select village'>"+valtext);
-                     
+                     $("#village-select").append("<input type=checkbox value='"+valtext+"' name='village'>"+valtext);
                  });
-                $("form").removeData("validator").removeData("unobtrusiveValidation"); 
-                $.validator.unobtrusive.parse("form");
-
-               
+                });
             }
         })
-        }
-        else
+    }
+     else
         {
-            $('#parent_hospital').empty();
+             $('#parent_hospital').empty();
 document.getElementById("parenthosp-span").style.display="none";
         document.getElementById("village-span").style.display="none";
-           $('#village-select').empty();
+          $('#village-select').empty();
                   document.getElementById("village-select").style.display="none"
-       
         }
-        
     });
+});
 
 
-   
 
-$("form").submit(function  (e) {
+$("document").ready(function(){
+    $("form").submit(function  (e) {
         // body...
         e.preventDefault();
-        if ($("form").valid()) {
 
+        if ($("form").valid()) {
             var hosname = document.getElementById("id_hospital_name").value;
             //alert(hosname)
-            var hostype = $("select[name=hospitaltype]").val();
+            var hostype = $("select[name=hospital_type]").val();
             //alert(hostype)
             var address = document.getElementById("id_address_name").value;
             //alert(address)
@@ -510,12 +551,12 @@ $("form").submit(function  (e) {
             var active=document.getElementById('status').checked==true ? "true" :"false";
             $.ajax({
 
-                url: "/savehospital/?name="+hosname+ "&type="+hostype+"&add="+address+"&hos_country="+country+"&hos_county="+county+"&hos_district="+district+"&hos_subdistrict="+subdistrict+"&parent_hos="+parenthospital+"&hos_village="+villages+"&active="+active,
+                url: "/updatehospital/?name="+hosname+ "&type="+hostype+"&add="+address+"&hos_country="+country+"&hos_county="+county+"&hos_district="+district+"&hos_subdistrict="+subdistrict+"&parent_hos="+parenthospital+"&hos_village="+villages+"&active="+active,
                 type: 'GET',
                 acceptType: "json",
                 success: function (result) {
                 if (result.error){
-                   
+                    
                     for (var key in result.response.keys()){
                         $("#id_"+key).after("<p class='error'>"+result.response[key]+"</p>")
                     }
@@ -527,20 +568,14 @@ $("form").submit(function  (e) {
                 }
 
             });
-        }
-        
-        
-    });
 
+        }
+       
+    });
     $("#advance-cancel-button").on('click', function(){
         window.location="/admin/Masters/healthcenters/";
     });
-
-
-});
-
-    
-  
+})
 </script>
 
 
