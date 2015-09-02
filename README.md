@@ -1,5 +1,5 @@
-# opensrp-admin
-This is a standalone admin module to create and update Masters
+# opensrp-plugin
+This is a standalone admin module to create and update Master data
 
 1. Manage user accounts
 
