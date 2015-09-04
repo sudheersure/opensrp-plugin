@@ -193,13 +193,23 @@ div.submit {
                         </div>
             
         </div>
-        <div class="form-row field-user_pwd">
-            
+        <div class="form-row field-password">
+
                         <div>
+
                         <label class="required" for="id_user_pwd">Password:<span style="color:red">&nbsp;*</span></label>
-                        
-                         <input type="password" class="vTextField" id="id_user_pwd" name="id_user_pwd" value="" data-val="true" data-val-required="Pasword cannot be empty" minlength="6" maxlength="10"/>
-                          <span class="field-validation-valid" data-valmsg-for="id_user_pwd" data-valmsg-replace="true" ></span>
+                        <input type="password" class="vTextField" id="id_user_pwd" name="user_pwd"  data-val="true" data-val-required="Password cannot be empty"  maxlength="10" minlength="6" />
+                        <span class="field-validation-valid" data-valmsg-for="user_pwd" data-valmsg-replace="true" ></span>
+                        </div>
+
+        </div>
+        <div class="form-row field-user_conf_pwd">
+
+                        <div>
+                        <label class="required" for="user_conf_pwd">Confirm Password:<span style="color:red">&nbsp;*</span></label>
+                        <input type="password" class="vTextField" id="id_user_conf_pwd" name="user_conf_pwd"  data-val="true" data-val-required="Confirm Password cannot be empty"  maxlength="10" minlength="6" data-val-equalto="Password doesn't match!" data-val-equalto-other="*.user_pwd"/>
+
+                          <span class="field-validation-valid" data-valmsg-for="user_conf_pwd" data-valmsg-replace="true"></span>
                         </div>
             
         </div>

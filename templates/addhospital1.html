@@ -273,10 +273,10 @@ div.submit {
         </div>
 
 
-        <div class="form-row field-village">
+        <div class="form-row field-village" id="dv-village" style="display:none">
 
-            <label class ="required" >Village:<span id="village-span" style="color:red">&nbsp;*</span></label>
-                <div  id='village-select' style="display:none">
+            <label class ="required" >Village:<span  style="color:red">&nbsp;*</span></label>
+                <div  id='village-select' >
 
             <!-- <input type="checkbox"  value="village-select" name="village" id = 'villageselected'> -->
 
@@ -423,13 +423,16 @@ $("#id_county_name").on('change', function(e){
         if (hostype!="Country") {
 
             if (hostype=="Subcenter") {
-                  document.getElementById("village-span").style.display="";
-                  document.getElementById("village-select").style.display=""
+
+             document.getElementById("dv-village").style.display="";
+                 // document.getElementById("village-span").style.display="";
+                 // document.getElementById("village-select").style.display=""
             }
             else
             {
                  $('#village-select').empty();
-                  document.getElementById("village-select").style.display="none"
+                 document.getElementById("dv-village").style.display="none";
+                 // document.getElementById("village-select").style.display="none"
             }
        document.getElementById("parenthosp-span").style.display=""; 
          //document.getElementById("village-span").style.display="none";               
@@ -466,9 +469,10 @@ $.ajax({
         {
             $('#parent_hospital').empty();
 document.getElementById("parenthosp-span").style.display="none";
-        document.getElementById("village-span").style.display="none";
+       // document.getElementById("village-span").style.display="none";
            $('#village-select').empty();
-                  document.getElementById("village-select").style.display="none"
+            document.getElementById("dv-village").style.display="none";
+                //  document.getElementById("village-select").style.display="none"
        
         }
         

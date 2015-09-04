@@ -65,13 +65,18 @@ DATABASES = {
         'NAME': 'drishti',
         'USER': 'dhanush',
         'PASSWORD': 'dhanush',
-        #'HOST': '10.10.11.75',
         'HOST': 'localhost',
         'PORT': '5432',
         'OPTIONS': {
            'options': '-c search_path=report'
         }
-    }
+    },
+ 'dynamic_data':{
+   'ENGINE': 'django.db.backends.sqlite3',
+   'NAME':'test',
+   'USER':'',
+   'PASSWORD':''
+ },
 }
 
 # Internationalization
@@ -143,3 +148,5 @@ DISEASES = ('Pallor',
 'Convulsions',
 'Vomiting')
 
+
+PHONE_NUMBER_LENGTH = 10

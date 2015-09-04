@@ -283,10 +283,10 @@ div.submit {
         </div>
 
 
-        <div class="form-row field-village">
+        <div class="form-row field-village" id="dv-village" style="display:none">
 
-            <label class ="required" >Village:<span id="village-span" style="color:red">&nbsp;*</span></label>
-                <div  id='village-select' style="display:none">
+            <label class ="required" >Village:<span  style="color:red">&nbsp;*</span></label>
+                <div  id='village-select' >
 
                {% for v in villages%}
                <input type="checkbox" checked="checked" value="{{v}}" name='village' id="village">
@@ -334,11 +334,12 @@ function GetRecordId(words) {
 $("document").ready(function(){
 $("#hdID").val(GetRecordId(window.location.pathname));
 $('#status').val()=='true' ?  $('#status').attr('checked','checked') :  $('#status').removeAttr('checked');
-console.log($('#village').val())
-debugger
+//console.log($('#village').val())
+//debugger
 var village_val=$('#village').val();
 if (!village_val) {
-$('#village').css('display','none');
+//$('#village').css('display','none');
+ document.getElementById("dv-village").style.display="none";
 }
     $("#country").on('change', function(e){
         var dev = $(e.currentTarget).val();
@@ -438,15 +439,17 @@ document.getElementById("parenthosp-span").style.display="";
         if (hostype!="Country") {
 
             if (hostype=="Subcenter") {
-                  document.getElementById("village-span").style.display="";
-                   document.getElementById("village-select").style.display=""
+                  //document.getElementById("village-span").style.display="";
+                   //document.getElementById("village-select").style.display=""
+                     document.getElementById("dv-village").style.display="";
 
             }
             else
             {
 
               $('#village-select').empty();
-               document.getElementById("village-select").style.display="none"
+              // document.getElementById("village-select").style.display="none"
+                document.getElementById("dv-village").style.display="none";
             }
         
 
@@ -454,7 +457,8 @@ document.getElementById("parenthosp-span").style.display="";
         }
         else{
             document.getElementById("parenthosp-span").style.display="none";
-        document.getElementById("village-span").style.display="none";
+        //document.getElementById("village-span").style.display="none";
+          document.getElementById("dv-village").style.display="none";
         }
         
        
@@ -475,14 +479,17 @@ document.getElementById("parenthosp-span").style.display="";
         
 
         if (hostype!="Country") {
-
+debugger;
             if (hostype=="Subcenter") {
-                  document.getElementById("village-span").style.display="";
-                  document.getElementById("village-select").style.display=""
+                  //document.getElementById("village-span").style.display="";
+                  //document.getElementById("village-select").style.display=""
+                  document.getElementById("dv-village").style.display="";
             }else{
  $('#village-select').empty();
+ document.getElementById("dv-village").style.display="none";
             }
-       document.getElementById("parenthosp-span").style.display="";               
+       document.getElementById("parenthosp-span").style.display="";
+                 //  document.getElementById("dv-village").style.display="none";
 
         $.ajax({
             url:"/parenthospital/?country="+ country+"&county="+ county+"&district="+district+"&subdistrict="+subdistrict+"&hos_type="+hostype,
@@ -508,9 +515,10 @@ document.getElementById("parenthosp-span").style.display="";
         {
              $('#parent_hospital').empty();
 document.getElementById("parenthosp-span").style.display="none";
-        document.getElementById("village-span").style.display="none";
+       // document.getElementById("village-span").style.display="none";
+       document.getElementById("dv-village").style.display="none";
           $('#village-select').empty();
-                  document.getElementById("village-select").style.display="none"
+                 // document.getElementById("village-select").style.display="none"
         }
     });
 });
