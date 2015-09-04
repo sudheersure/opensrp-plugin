@@ -326,23 +326,34 @@ class HealthCenterAdmin(admin.ModelAdmin):
         return False
 
 class AppConfigurationAdmin(admin.ModelAdmin):
-    list_display = ('wifeagemin','wifeagemax','husbandagemin','husbandagemax','temperature','country_name',)
-    search_fields = ('wifeagemin',)
+    list_display = ('wife_age_min','wife_age_max','husband_age_min','husband_age_max','temperature_units','country_name',)
+    search_fields = ('wife_age_min',)
     fieldsets = (
       (None, {
-          'fields': ('country_name','temperature')
+          'fields': ('country_name','temperature_units','registration_text','poc_text','escalation_schedule')
       }),
       ('Wife age', {
-          'fields': ('wifeagemin','wifeagemax')
+          'fields': ('wife_age_min','wife_age_max')
       }),
       ('Husband age', {
-          'fields': ('husbandagemin','husbandagemax')
+          'fields': ('husband_age_min','husband_age_max')
       }),
 
    )
 
     def get_actions(self, request):
         actions = super(AppConfigurationAdmin, self).get_actions(request)
+        del actions['delete_selected']
+        return actions
+
+    def has_delete_permission(self, request, obj=None):
+        return False
+
+class FormFieldsAdmin(admin.ModelAdmin):
+    list_display = ("form_name","country","field1","field2","field3","field4","field5")
+
+    def get_actions(self, request):
+        actions = super(FormFieldsAdmin, self).get_actions(request)
         del actions['delete_selected']
         return actions
 
@@ -366,3 +377,4 @@ admin.site.register(SubdistrictTab,SubdistrictTabAdmin)
 admin.site.register(LocationTab,LocationTabAdmin)
 admin.site.register(HealthCenters,HealthCenterAdmin)
 admin.site.register(AppConfiguration,AppConfigurationAdmin)
+admin.site.register(FormFields,FormFieldsAdmin)

@@ -16,6 +16,7 @@
          }
 
 </style>
+    <script type="text/javascript" src="https://code.jquery.com/jquery-1.8.2.min.js"></script>
 </head>
 {% load i18n %}
 
@@ -84,5 +85,40 @@
 </div>
 <!-- END Container -->
 
+<script type="text/javascript">
+
+$(function  () {
+
+
+  if ($(".paginator")!=undefined) {
+
+$(".paginator").text($(".paginator").text() + "RECORDS");
+  }
+
+
+var msg;
+if (window.location.href.indexOf("done") > -1) {
+msg=$("#content>p").text();
+$("#content>p").html(msg +" " +"<a href='/admin/logout/'>Click here to continue</a>");
+$(".breadcrumbs").hide();
+}
+
+
+
+if (window.location.href.indexOf("password_change") > -1) {
+    $("#content>h1").text('Change Password');
+    $(".breadcrumbs").html("<a href='/admin/'>Home</a>" + "› Change Password")
+
+    $(".module > div > label").each(function  (index,value) {
+        // body...
+        if (index==2)
+    $(value).text("Confirm Password")
+
+
+    });
+}
+
+})
+</script>
 </body>
 </html>

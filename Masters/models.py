@@ -19,7 +19,7 @@ class AnnualTarget(models.Model):
     end_date = models.DateField()
 
     class Meta:
-        managed = False
+        #managed = False
         db_table = 'annual_target'
 
 
@@ -35,7 +35,7 @@ class DimAnm(models.Model):
     #active = models.BooleanField(default=True)
 
     class Meta:
-        managed = False
+        #managed = False
         db_table = 'dim_anm'
         verbose_name_plural='ANM'
 	verbose_name='ANM'
@@ -51,7 +51,7 @@ class DimIndicator(models.Model):
     active = models.BooleanField(default=True)
 
     class Meta:
-        managed = False
+        #managed = False
         db_table = 'dim_indicator'
         verbose_name_plural='INDICATOR'
 	verbose_name='INDICATOR'
@@ -70,7 +70,7 @@ class DimLocation(models.Model):
     state = models.CharField(max_length=100)
 
     class Meta:
-        managed = False
+        #managed = False
         db_table = 'dim_location'
         verbose_name_plural='LOCATIONS'
 	verbose_name='LOCATIONS'
@@ -81,7 +81,7 @@ class DimLocation(models.Model):
 class Subcenter(models.Model):
     subcenter = models.CharField(max_length=100)    
     class Meta:
-        managed = False
+        #managed = False
         db_table = 'subcenter_tb'
 
 class DimPhc(models.Model):
@@ -90,7 +90,7 @@ class DimPhc(models.Model):
     name = models.CharField(max_length=100)
 
     class Meta:
-        managed = False
+        #managed = False
         db_table = 'dim_phc'
         verbose_name_plural = 'PHCS'
 	verbose_name='PHCS'
@@ -106,7 +106,7 @@ class DimServiceProvider(models.Model):
     active = models.BooleanField(default=True)
 
     class Meta:
-        managed = False
+        #managed = False
         db_table = 'dim_service_provider'
         verbose_name_plural='USER ROLE'
 	verbose_name='USER ROLE'
@@ -119,7 +119,7 @@ class DimServiceProviderType(models.Model):
     active = models.BooleanField(default=True)
 
     class Meta:
-        managed = False
+        #managed = False
         db_table = 'dim_service_provider_type'
         verbose_name_plural='USER TYPE'
 	verbose_name='USER TYPE'
@@ -142,7 +142,7 @@ class SchemaVersion(models.Model):
     success = models.BooleanField(default=True)
 
     class Meta:
-        managed = False
+        #managed = False
         db_table = 'schema_version'
 
 class AuthGroup(models.Model):
@@ -150,7 +150,7 @@ class AuthGroup(models.Model):
     name = models.CharField(unique=True, max_length=80)
 
     class Meta:
-        managed = False
+        #managed = False
         db_table = 'auth_group'
 
 
@@ -160,7 +160,7 @@ class AuthGroupPermissions(models.Model):
     permission = models.ForeignKey('AuthPermission')
 
     class Meta:
-        managed = False
+        #managed = False
         db_table = 'auth_group_permissions'
 
 
@@ -171,7 +171,7 @@ class AuthPermission(models.Model):
     codename = models.CharField(max_length=100)
 
     class Meta:
-        managed = False
+        #managed = False
         db_table = 'auth_permission'
 
 
@@ -189,7 +189,7 @@ class AuthUser(models.Model):
     date_joined = models.DateTimeField()
 
     class Meta:
-        managed = False
+        #managed = False
         db_table = 'auth_user'
 
 
@@ -199,7 +199,7 @@ class AuthUserGroups(models.Model):
     group = models.ForeignKey(AuthGroup)
 
     class Meta:
-        managed = False
+        #managed = False
         db_table = 'auth_user_groups'
 
 
@@ -209,7 +209,7 @@ class AuthUserUserPermissions(models.Model):
     permission = models.ForeignKey(AuthPermission)
 
     class Meta:
-        managed = False
+        #managed = False
         db_table = 'auth_user_user_permissions'
 
 class DimUserLogin(models.Model):
@@ -220,7 +220,7 @@ class DimUserLogin(models.Model):
     active = models.BooleanField(default=True)
 
     class Meta:
-        managed = False
+        #managed = False
         db_table = 'dim_user_login'
         verbose_name_plural = 'USER LOGIN'
 	verbose_name='USER LOGIN'
@@ -271,7 +271,7 @@ class DjangoAdminLog(models.Model):
     user = models.ForeignKey(AuthUser)
 
     class Meta:
-        managed = False
+        #managed = False
         db_table = 'django_admin_log'
 
 
@@ -282,7 +282,7 @@ class DjangoContentType(models.Model):
     model = models.CharField(max_length=100)
 
     class Meta:
-        managed = False
+        #managed = False
         db_table = 'django_content_type'
 
 
@@ -293,7 +293,7 @@ class DjangoMigrations(models.Model):
     applied = models.DateTimeField()
 
     class Meta:
-        managed = False
+        #managed = False
         db_table = 'django_migrations'
 
 
@@ -303,7 +303,7 @@ class DjangoSession(models.Model):
     expire_date = models.DateTimeField()
 
     class Meta:
-        managed = False
+        #managed = False
         db_table = 'django_session'
 
 
@@ -321,7 +321,7 @@ class ServiceProvidedReportView(models.Model):
     state = models.CharField(max_length=100, blank=True)
 
     class Meta:
-        managed = False
+        #managed = False
         db_table = 'service_provided_report_view'
 
 
@@ -331,7 +331,7 @@ class Token(models.Model):
     value = models.CharField(max_length=100)
 
     class Meta:
-        managed = False
+        #managed = False
         db_table = 'token'
 
 
@@ -375,7 +375,7 @@ class DrugInfo(models.Model):
     active = models.BooleanField(default=True)
 
     class Meta:
-        managed = False
+        #managed = False
         db_table = 'drug_info'
         verbose_name_plural="DRUG INFO"
         verbose_name='DRUG INFO'
@@ -390,7 +390,7 @@ class Frequency(models.Model):
     active = models.BooleanField(default=True)
 
     class Meta:
-        managed = False
+        #managed = False
         db_table = 'frequency'
         verbose_name_plural="FREQUENCIES"
 	verbose_name='FREQUIENCIES'
@@ -404,7 +404,7 @@ class Dosage(models.Model):
     active = models.BooleanField(default=True)
 
     class Meta:
-        managed = False
+        #managed = False
         db_table = 'dosage'
         verbose_name_plural="DOSAGE"
 	verbose_name='DOSAGE'
@@ -417,7 +417,7 @@ class Directions(models.Model):
     active = models.BooleanField(default=True)
 
     class Meta:
-        managed = False
+        #managed = False
         db_table = 'directions'
         verbose_name_plural = "DIRECTIONS"
 	verbose_name='DIRECTIONS'
@@ -435,7 +435,7 @@ class Investigations(models.Model):
     is_active = models.BooleanField(default=True)
 
     class Meta:
-        managed = True
+        #managed = True
         db_table = 'investigation'
         verbose_name_plural = "INVESTIGATION"
 	verbose_name='INVESTIGATION'
@@ -474,7 +474,7 @@ class ICD10(models.Model):
     status = models.BooleanField(default= True) 
 
     class Meta: 
-        managed = False
+        #managed = False
         db_table = 'icd10'
         verbose_name_plural="ICD10 CODES"
 	verbose_name='ICD10 CODES'
@@ -496,7 +496,7 @@ class PocInfo(models.Model):
     timestamp = models.DateTimeField(blank=True, null=True)
 
     class Meta:
-        managed = False
+        #managed = False
         db_table = 'poc_table'
         verbose_name_plural="POC INFO"
 	verbose_name='POC INFO'
@@ -512,7 +512,7 @@ class DocInfo(models.Model):
     
     class Meta:
         verbose_name_plural="DOCTORS"
-        managed = False
+        #managed = False
         db_table = 'doc_info'
 	verbose_name='DOCTORS'
 
@@ -530,9 +530,9 @@ class PocBackup(models.Model):
     visittype = models.CharField(max_length=35, blank=True)
     phc = models.CharField(max_length=100, blank=True)
     docid = models.CharField(max_length=100, blank=True)
-    poc = models.CharField(max_length=1000, blank=True)
+    poc = models.TextField()
     class Meta:
-        managed = False
+        #managed = False
         db_table = 'poc_backup'
 
 class UserMasters(models.Model):
@@ -555,7 +555,7 @@ class UserMasters(models.Model):
     active = models.BooleanField(default=True)
 
     class Meta:
-        managed = False
+        #managed = False
         db_table = 'user_masters'
         verbose_name_plural="USER MAINTENANCE"
         verbose_name="USER MAINTENANCE"
@@ -567,7 +567,6 @@ class UserMasters(models.Model):
 @receiver(post_save, sender=UserMasters)
 def usermaintenance_post(sender,instance,**kwargs):
     user_role = settings.USER_ROLE[str(instance.user_role)]
-    #print 
     user_curl = "curl -s -H -X GET http://202.153.34.169:5984/drishti/_design/DrishtiUser/_view/by_username?key="+"%22"+str(instance.user_id)+"%22"
     user_data = commands.getoutput(user_curl) 
     output = json.loads(user_data)
@@ -597,7 +596,7 @@ class HospitalDetails(models.Model):
 
     class Meta:
         verbose_name_plural="HOSPITAL DETAILS"
-        managed = False
+        #managed = False
         db_table = 'hospital_details'
         verbose_name= "HOSPITAL DETAILS"
 
@@ -609,22 +608,23 @@ class HospitalType(models.Model):
     types = models.CharField(max_length=100)
 
     class Meta:
-        managed = False
+        #managed = False
         db_table = 'hospital_type'
     def __unicode__(self):
         return self.types
 
 class CountryTb(models.Model):
     #id = models.IntegerField(primary_key=True)  # AutoField?
-    country_name = models.CharField(max_length=100)
+    country_name = models.CharField(max_length=100,unique=True)
     country_code=models.CharField(max_length=10)
     active = models.BooleanField(default=True)
 
     class Meta:
         verbose_name_plural="COUNTRY"
-        managed = False
+        #managed = False
         db_table = 'country_tb'
         verbose_name="COUNTRY"
+
     def __unicode__(self):
         return self.country_name
 
@@ -637,7 +637,7 @@ class CountyTb(models.Model):
 
     class Meta:
         verbose_name_plural="COUNTY"
-        managed = False
+        #managed = False
         db_table = 'county_tb'
         verbose_name="COUNTY"
     def __unicode__(self):
@@ -651,7 +651,7 @@ class Disttab(models.Model):
     active = models.BooleanField(default=True)
 
     class Meta:
-        managed = False
+        #managed = False
         verbose_name_plural="DISTRICT"
         verbose_name="DISTRICT"
         db_table = 'disttab'
@@ -665,7 +665,7 @@ class SubdistrictTab(models.Model):
     active = models.BooleanField(default=True)
 
     class Meta:
-        managed = False
+        #managed = False
         verbose_name_plural="SUBDISTRICT"
         verbose_name="SUBDISTRICT"
         db_table = 'subdistrict_tab'
@@ -680,7 +680,7 @@ class LocationTab(models.Model):
     active = models.BooleanField(default=True)
 
     class Meta:
-        managed = False
+        #managed = False
         verbose_name_plural="LOCATIONS"
         verbose_name="LOCATIONS"
         db_table = 'location_tab'
@@ -700,7 +700,7 @@ class HealthCenters(models.Model):
     active = models.BooleanField(default=True)
 
     class Meta:
-        managed = False
+        #managed = False
         verbose_name_plural="HEALTHCENTERS"
         db_table = 'health_centers'
         verbose_name= 'HEALTHCENTERS'
@@ -710,25 +710,39 @@ class AppConfiguration(models.Model):
             ("farenheit","Farenheit"))
     #id = models.IntegerField(primary_key=True)  # AutoField?
     country_name = models.ForeignKey(CountryTb, db_column='country_name',limit_choices_to={'active': True})
-    wifeagemin = models.PositiveIntegerField()
-    wifeagemax = models.PositiveIntegerField()
-    husbandagemin = models.PositiveIntegerField()
-    husbandagemax = models.IntegerField()
-    temperature = models.CharField(max_length=20,choices=TEMP)
-
+    wife_age_min = models.PositiveIntegerField()
+    wife_age_max = models.PositiveIntegerField()
+    husband_age_min = models.PositiveIntegerField()
+    husband_age_max = models.PositiveIntegerField()
+    temperature_units = models.CharField(max_length=20)
+    registration_text = models.TextField(max_length=480)
+    escalation_schedule = models.IntegerField()
+    poc_text = models.TextField(max_length=480)
 
     class Meta:
-        managed = False
+        #managed = False
         db_table = 'app_configuration'
+        verbose_name_plural="APPCONFIGURATION"
+        verbose_name="APPCONFIGURATION"
 
-    def save(self, *args, **kwargs):
-        from django.core.exceptions import ValidationError
-        self.wifemin =self.wifeagemin
-        self.wifemax =self.wifeagemax
-        self.husbandmin =self.husbandagemin
-        self.husbandmax =self.husbandagemax
-        if self.wifemin>self.wifemax:
-            raise ValidationError("maxage error")
-        elif self.husbandmin>self.husbandmax:
-            raise ValidationError("maxage error")
-        super(AppConfiguration, self).save(*args, **kwargs)
+class FormFields(models.Model):
+    FORMS = (("anc_registration","ANC Registration"),
+             ("ec_registration","EC Registration"),
+             ("pnc_registration","PNC Registration"),
+             ("fp_registration","FP Registration"),
+             ("child_registration","child Registration"))
+    #id = models.IntegerField(primary_key=True)  # AutoField?
+    country = models.ForeignKey(CountryTb, db_column='country')
+    form_name = models.CharField(max_length=50, choices=FORMS)
+    field1 = models.CharField(max_length=50, blank=True)
+    field2 = models.CharField(max_length=50, blank=True)
+    field3 = models.CharField(max_length=50, blank=True)
+    field4 = models.CharField(max_length=50, blank=True)
+    field5 = models.CharField(max_length=50, blank=True)
+
+    class Meta:
+        #managed = False
+        unique_together = ("country", "form_name",)
+        db_table = "form_fields"
+        verbose_name_plural="FORMFIELDS"
+        verbose_name="FORMFIELDS"
