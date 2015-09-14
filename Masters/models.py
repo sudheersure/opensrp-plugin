@@ -6,126 +6,126 @@ from django.conf import settings
 from django.db.models.signals import post_save
 import hashlib
 import commands
-from smart_selects.db_fields import ChainedForeignKey
+#from smart_selects.db_fields import ChainedForeignKey
 from django.shortcuts import render_to_response, redirect, get_object_or_404
 from multiselectfield import MultiSelectField
 
-class AnnualTarget(models.Model):
-    #id = models.IntegerField(primary_key=True)  # AutoField?
-    service_provider = models.ForeignKey('DimAnm', db_column='service_provider')
-    indicator = models.ForeignKey('DimIndicator', db_column='indicator')
-    target = models.CharField(max_length=100)
-    start_date = models.DateField()
-    end_date = models.DateField()
+# class AnnualTarget(models.Model):
+#     #id = models.IntegerField(primary_key=True)  # AutoField?
+#     service_provider = models.ForeignKey('DimAnm', db_column='service_provider')
+#     indicator = models.ForeignKey('DimIndicator', db_column='indicator')
+#     target = models.CharField(max_length=100)
+#     start_date = models.DateField()
+#     end_date = models.DateField()
 
-    class Meta:
-        #managed = False
-        db_table = 'annual_target'
-
-
-    def __unicode__(self):
-        return unicode(self.target)
-
-class DimAnm(models.Model):
-    #id = models.IntegerField(primary_key=True)  # AutoField?
-    anmidentifier = models.CharField(unique=True, max_length=100)
-    phc = models.ForeignKey('DimPhc', db_column='phc')
-    subcenter = models.CharField(max_length=100,)
-    name = models.CharField(max_length=100)
-    #active = models.BooleanField(default=True)
-
-    class Meta:
-        #managed = False
-        db_table = 'dim_anm'
-        verbose_name_plural='ANM'
-	verbose_name='ANM'
-
-    def __unicode__(self):
-        return self.anmidentifier
+#     class Meta:
+#         #managed = False
+#         db_table = 'annual_target'
 
 
+#     def __unicode__(self):
+#         return unicode(self.target)
 
-class DimIndicator(models.Model):
-    #id = models.IntegerField(primary_key=True)  # AutoField?
-    indicator = models.CharField(unique=True, max_length=100)
-    active = models.BooleanField(default=True)
+# class DimAnm(models.Model):
+#     #id = models.IntegerField(primary_key=True)  # AutoField?
+#     anmidentifier = models.CharField(unique=True, max_length=100)
+#     phc = models.ForeignKey('DimPhc', db_column='phc')
+#     subcenter = models.CharField(max_length=100,)
+#     name = models.CharField(max_length=100)
+#     #active = models.BooleanField(default=True)
 
-    class Meta:
-        #managed = False
-        db_table = 'dim_indicator'
-        verbose_name_plural='INDICATOR'
-	verbose_name='INDICATOR'
+#     class Meta:
+#         #managed = False
+#         db_table = 'dim_anm'
+#         verbose_name_plural='ANM'
+# 	verbose_name='ANM'
 
-    def __unicode__(self):
-        return unicode(self.indicator)
-
-
-class DimLocation(models.Model):
-    #id = models.IntegerField(primary_key=True)  # AutoField?
-    village = models.CharField(max_length=100)
-    subcenter = models.CharField(max_length=100)
-    phc = models.ForeignKey('DimPhc', db_column='phc')
-    taluka = models.CharField(max_length=100)
-    district = models.CharField(max_length=100)
-    state = models.CharField(max_length=100)
-
-    class Meta:
-        #managed = False
-        db_table = 'dim_location'
-        verbose_name_plural='LOCATIONS'
-	verbose_name='LOCATIONS'
-
-    def __unicode__(self):
-        return unicode(self.village)
-
-class Subcenter(models.Model):
-    subcenter = models.CharField(max_length=100)    
-    class Meta:
-        #managed = False
-        db_table = 'subcenter_tb'
-
-class DimPhc(models.Model):
-    #id = models.IntegerField(primary_key=True)  # AutoField?
-    phcidentifier = models.CharField(unique=True, max_length=100)
-    name = models.CharField(max_length=100)
-
-    class Meta:
-        #managed = False
-        db_table = 'dim_phc'
-        verbose_name_plural = 'PHCS'
-	verbose_name='PHCS'
-
-    def __unicode__(self):
-        return unicode(self.name)
+#     def __unicode__(self):
+#         return self.anmidentifier
 
 
-class DimServiceProvider(models.Model):
-    #id = models.IntegerField(primary_key=True)  # AutoField?
-    service_provider = models.IntegerField()
-    type = models.ForeignKey('DimServiceProviderType', db_column='type')
-    active = models.BooleanField(default=True)
 
-    class Meta:
-        #managed = False
-        db_table = 'dim_service_provider'
-        verbose_name_plural='USER ROLE'
-	verbose_name='USER ROLE'
-    def __unicode__(self):
-        return unicode(self.service_provider)
+# class DimIndicator(models.Model):
+#     #id = models.IntegerField(primary_key=True)  # AutoField?
+#     indicator = models.CharField(unique=True, max_length=100)
+#     active = models.BooleanField(default=True)
 
-class DimServiceProviderType(models.Model):
-    #id = models.IntegerField(primary_key=True)  # AutoField?
-    type = models.CharField(unique=True,max_length=100)
-    active = models.BooleanField(default=True)
+#     class Meta:
+#         #managed = False
+#         db_table = 'dim_indicator'
+#         verbose_name_plural='INDICATOR'
+# 	verbose_name='INDICATOR'
 
-    class Meta:
-        #managed = False
-        db_table = 'dim_service_provider_type'
-        verbose_name_plural='USER TYPE'
-	verbose_name='USER TYPE'
+#     def __unicode__(self):
+#         return unicode(self.indicator)
 
-    def __unicode__(self):
-        return unicode(self.type)
+
+# class DimLocation(models.Model):
+#     #id = models.IntegerField(primary_key=True)  # AutoField?
+#     village = models.CharField(max_length=100)
+#     subcenter = models.CharField(max_length=100)
+#     phc = models.ForeignKey('DimPhc', db_column='phc')
+#     taluka = models.CharField(max_length=100)
+#     district = models.CharField(max_length=100)
+#     state = models.CharField(max_length=100)
+
+#     class Meta:
+#         #managed = False
+#         db_table = 'dim_location'
+#         verbose_name_plural='LOCATIONS'
+# 	verbose_name='LOCATIONS'
+
+#     def __unicode__(self):
+#         return unicode(self.village)
+
+# class Subcenter(models.Model):
+#     subcenter = models.CharField(max_length=100)    
+#     class Meta:
+#         #managed = False
+#         db_table = 'subcenter_tb'
+
+# class DimPhc(models.Model):
+#     #id = models.IntegerField(primary_key=True)  # AutoField?
+#     phcidentifier = models.CharField(unique=True, max_length=100)
+#     name = models.CharField(max_length=100)
+
+#     class Meta:
+#         #managed = False
+#         db_table = 'dim_phc'
+#         verbose_name_plural = 'PHCS'
+# 	verbose_name='PHCS'
+
+#     def __unicode__(self):
+#         return unicode(self.name)
+
+
+# class DimServiceProvider(models.Model):
+#     #id = models.IntegerField(primary_key=True)  # AutoField?
+#     service_provider = models.IntegerField()
+#     type = models.ForeignKey('DimServiceProviderType', db_column='type')
+#     active = models.BooleanField(default=True)
+
+#     class Meta:
+#         #managed = False
+#         db_table = 'dim_service_provider'
+#         verbose_name_plural='USER ROLE'
+# 	verbose_name='USER ROLE'
+#     def __unicode__(self):
+#         return unicode(self.service_provider)
+
+# class DimServiceProviderType(models.Model):
+#     #id = models.IntegerField(primary_key=True)  # AutoField?
+#     type = models.CharField(unique=True,max_length=100)
+#     active = models.BooleanField(default=True)
+
+#     class Meta:
+#         #managed = False
+#         db_table = 'dim_service_provider_type'
+#         verbose_name_plural='USER TYPE'
+# 	verbose_name='USER TYPE'
+
+#     def __unicode__(self):
+#         return unicode(self.type)
 
 
 class SchemaVersion(models.Model):
@@ -212,52 +212,52 @@ class AuthUserUserPermissions(models.Model):
         #managed = False
         db_table = 'auth_user_user_permissions'
 
-class DimUserLogin(models.Model):
-    #id = models.IntegerField(primary_key=True)  # AutoField?
-    name = models.CharField(unique=True,max_length=30)
-    password = models.CharField(max_length=128)
-    user_role = models.ForeignKey(DimServiceProviderType, db_column='user_role', blank=True, null=True)
-    active = models.BooleanField(default=True)
+# class DimUserLogin(models.Model):
+#     #id = models.IntegerField(primary_key=True)  # AutoField?
+#     name = models.CharField(unique=True,max_length=30)
+#     password = models.CharField(max_length=128)
+#     user_role = models.ForeignKey(DimServiceProviderType, db_column='user_role', blank=True, null=True)
+#     active = models.BooleanField(default=True)
 
-    class Meta:
-        #managed = False
-        db_table = 'dim_user_login'
-        verbose_name_plural = 'USER LOGIN'
-	verbose_name='USER LOGIN'
+#     class Meta:
+#         #managed = False
+#         db_table = 'dim_user_login'
+#         verbose_name_plural = 'USER LOGIN'
+# 	verbose_name='USER LOGIN'
 
-    def __unicode__(self):
-        return unicode(self.name)    
+#     def __unicode__(self):
+#         return unicode(self.name)    
 
-    def save(self, *args, **kwargs):
-        self.name =self.name
-        m = hashlib.sha1()
-        m.update(self.password)
-        self.password = m.hexdigest()
-        super(DimUserLogin, self).save(*args, **kwargs)
+#     def save(self, *args, **kwargs):
+#         self.name =self.name
+#         m = hashlib.sha1()
+#         m.update(self.password)
+#         self.password = m.hexdigest()
+#         super(DimUserLogin, self).save(*args, **kwargs)
      
-    def __unicode__(self):
-        return self.name
+#     def __unicode__(self):
+#         return self.name
 
-@receiver(post_save, sender=DimUserLogin)
-def anmidentifier_post(sender,instance,**kwargs):
-    usr_role = settings.USER_ROLE[str(instance.user_role)]
-    user_curl = "curl -s -H -X GET http://localhost:5984/drishti/_design/DrishtiUser/_view/by_username?key="+"%22"+str(instance.name)+"%22"
-    user_data = commands.getoutput(user_curl) 
-    output = json.loads(user_data)
-    output = dict(output)
-    row = output['rows']
-    if len(row)>0:
-        id_val = dict(output['rows'][0])
-        rev_curl = "curl -s -H -X GET http://localhost:5984/drishti/"+id_val['id']
-        rev_data = commands.getoutput(rev_curl)
-        rev_data = dict(json.loads(rev_data))
-        delet_curl = "curl -X DELETE http://localhost:5984/drishti/"+id_val['id']+"/?rev\="+rev_data['_rev']
-        user_data = commands.getoutput(delet_curl) 
-    user_pwd=DimUserLogin.objects.filter(name=str(instance)).values_list('password')
-    cmd = '''curl -s -H Content-Type:application/json -d '{"docs": [{"type": "DrishtiUser","username": "%s","password": "%s","active": true,"roles": ["%s"]  } ]}' -X POST http://localhost:5984/drishti/_bulk_docs''' %(str(instance.name),str(instance.password),str(usr_role))
-    res = commands.getstatusoutput(cmd)
+# @receiver(post_save, sender=DimUserLogin)
+# def anmidentifier_post(sender,instance,**kwargs):
+#     usr_role = settings.USER_ROLE[str(instance.user_role)]
+#     user_curl = "curl -s -H -X GET http://localhost:5984/drishti/_design/DrishtiUser/_view/by_username?key="+"%22"+str(instance.name)+"%22"
+#     user_data = commands.getoutput(user_curl) 
+#     output = json.loads(user_data)
+#     output = dict(output)
+#     row = output['rows']
+#     if len(row)>0:
+#         id_val = dict(output['rows'][0])
+#         rev_curl = "curl -s -H -X GET http://localhost:5984/drishti/"+id_val['id']
+#         rev_data = commands.getoutput(rev_curl)
+#         rev_data = dict(json.loads(rev_data))
+#         delet_curl = "curl -X DELETE http://localhost:5984/drishti/"+id_val['id']+"/?rev\="+rev_data['_rev']
+#         user_data = commands.getoutput(delet_curl) 
+#     user_pwd=DimUserLogin.objects.filter(name=str(instance)).values_list('password')
+#     cmd = '''curl -s -H Content-Type:application/json -d '{"docs": [{"type": "DrishtiUser","username": "%s","password": "%s","active": true,"roles": ["%s"]  } ]}' -X POST http://localhost:5984/drishti/_bulk_docs''' %(str(instance.name),str(instance.password),str(usr_role))
+#     res = commands.getstatusoutput(cmd)
     
-post_save.connect(anmidentifier_post,sender=DimUserLogin)
+# post_save.connect(anmidentifier_post,sender=DimUserLogin)
 
 
 class DjangoAdminLog(models.Model):
@@ -481,43 +481,43 @@ class ICD10(models.Model):
     def __unicode_(self):
         return self.ICD10_Name
 
-class PocInfo(models.Model):
+# class PocInfo(models.Model):
 
-    visitentityid = models.CharField(max_length=100) # AutoField?
-    entityidec = models.CharField(max_length=100)
-    anmid = models.CharField(max_length=100)
-    level = models.CharField(max_length=35)
-    clientversion = models.CharField(max_length=35)
-    serverversion = models.CharField(max_length=35)
-    visittype = models.CharField(max_length=35)
-    phc = models.CharField(max_length=100)
-    pending = models.CharField(max_length=300, blank=True)
-    docid = models.CharField(max_length=50, blank=True)
-    timestamp = models.DateTimeField(blank=True, null=True)
+#     visitentityid = models.CharField(max_length=100) # AutoField?
+#     entityidec = models.CharField(max_length=100)
+#     anmid = models.CharField(max_length=100)
+#     level = models.CharField(max_length=35)
+#     clientversion = models.CharField(max_length=35)
+#     serverversion = models.CharField(max_length=35)
+#     visittype = models.CharField(max_length=35)
+#     phc = models.CharField(max_length=100)
+#     pending = models.CharField(max_length=300, blank=True)
+#     docid = models.CharField(max_length=50, blank=True)
+#     timestamp = models.DateTimeField(blank=True, null=True)
 
-    class Meta:
-        #managed = False
-        db_table = 'poc_table'
-        verbose_name_plural="POC INFO"
-	verbose_name='POC INFO'
-    def __unicode__(self):
-        return unicode(self.visitentityid)
+#     class Meta:
+#         #managed = False
+#         db_table = 'poc_table'
+#         verbose_name_plural="POC INFO"
+# 	verbose_name='POC INFO'
+#     def __unicode__(self):
+#         return unicode(self.visitentityid)
 
 
 
-class DocInfo(models.Model):
-    docname = models.CharField(unique=True,max_length=100)
-    phc = models.ForeignKey('DimPhc', db_column='phc')
-    active = models.BooleanField(default=True)
+# class DocInfo(models.Model):
+#     docname = models.CharField(unique=True,max_length=100)
+#     phc = models.ForeignKey('DimPhc', db_column='phc')
+#     active = models.BooleanField(default=True)
     
-    class Meta:
-        verbose_name_plural="DOCTORS"
-        #managed = False
-        db_table = 'doc_info'
-	verbose_name='DOCTORS'
+#     class Meta:
+#         verbose_name_plural="DOCTORS"
+#         #managed = False
+#         db_table = 'doc_info'
+# 	verbose_name='DOCTORS'
 
-    def __unicode__(self):
-        return unicode(self.docname)
+#     def __unicode__(self):
+#         return unicode(self.docname)
 
 class PocBackup(models.Model):
     #id = models.IntegerField(primary_key=True)
@@ -557,8 +557,8 @@ class UserMasters(models.Model):
     class Meta:
         #managed = False
         db_table = 'user_masters'
-        verbose_name_plural="USER MAINTENANCE"
-        verbose_name="USER MAINTENANCE"
+        verbose_name_plural="USERS"
+        verbose_name="USERS"
 
     def __unicode__(self):
         return self.user_id
@@ -706,6 +706,10 @@ class HealthCenters(models.Model):
         verbose_name= 'HEALTHCENTERS'
 
 class AppConfiguration(models.Model):
+    IS_HIGHRISK = (('TB', 'TB'),
+               ('Hypertension', 'Hypertension'),
+               ('Heart-related-diseases', 'Heart-related-diseases'),
+               ('Diabetes', 'Diabetes'))
     TEMP = (("celsius","Celsius"),
             ("farenheit","Farenheit"))
     #id = models.IntegerField(primary_key=True)  # AutoField?
@@ -714,16 +718,15 @@ class AppConfiguration(models.Model):
     wife_age_max = models.PositiveIntegerField()
     husband_age_min = models.PositiveIntegerField()
     husband_age_max = models.PositiveIntegerField()
-    temperature_units = models.CharField(max_length=20)
-    registration_text = models.TextField(max_length=480)
+    temperature_units = models.CharField(max_length=20,choices=TEMP)
     escalation_schedule = models.IntegerField()
-    poc_text = models.TextField(max_length=480)
+    is_highrisk = MultiSelectField(choices=IS_HIGHRISK,null=True,blank=True)
 
     class Meta:
-        #managed = False
+        managed = False
         db_table = 'app_configuration'
-        verbose_name_plural="APPCONFIGURATION"
-        verbose_name="APPCONFIGURATION"
+        verbose_name_plural="APP CONFIGURATION"
+        verbose_name="APP CONFIGURATION"
 
 class FormFields(models.Model):
     FORMS = (("anc_registration","ANC Registration"),
@@ -746,3 +749,18 @@ class FormFields(models.Model):
         db_table = "form_fields"
         verbose_name_plural="FORMFIELDS"
         verbose_name="FORMFIELDS"
+class VisitConfiguration(models.Model):
+    #id = models.IntegerField(primary_key=True)  # AutoField?
+    anc_visit1_from_week = models.IntegerField(blank=True, null=True)
+    anc_visit1_to_week = models.IntegerField(blank=True, null=True)
+    anc_visit2_from_week = models.IntegerField(blank=True, null=True)
+    anc_visit2_to_week = models.IntegerField(blank=True, null=True)
+    anc_visit3_from_week = models.IntegerField(blank=True, null=True)
+    anc_visit3_to_week = models.IntegerField(blank=True, null=True)
+    anc_visit4_from_week = models.IntegerField(blank=True, null=True)
+    anc_visit4_to_week = models.IntegerField(blank=True, null=True)        
+    class Meta:
+        managed = False
+        db_table = 'visit_configuration'
+        verbose_name_plural="VISIT CONFIGURATION"
+        verbose_name="VISIT CONFIGURATION"

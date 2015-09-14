@@ -39,7 +39,6 @@ def get_drugdata(request):
     return HttpResponse(result_json)
 
 def poc_update(request):
-    patientph="9985408792"
     if request.method =="GET":
         document_id=request.GET.get("docid","")
         poc_info=request.GET.get("pocinfo","")
@@ -47,7 +46,7 @@ def poc_update(request):
         entityid=request.GET.get("entityid","")
         docid=request.GET.get("doctorid","")
         pending =request.GET.get("pending","")
-        patientph =str(request.GET.get("patientph",""))
+        #patientph =str(request.GET.get("patientph",""))
 
     elif request.method =="POST":
         document_id=request.POST.get("docid","")
@@ -57,23 +56,15 @@ def poc_update(request):
         docid=request.POST.get("doctorid","")
         pending =request.POST.get("pending","")
         patientph =request.GET.get("patientph","")
-    poc_details = json.loads(poc_info)
+
     poc = []
     poc_data = {}
     poc_data['pending']=pending
     poc_data['poc'] = str(poc_info)
     poc_backup_data = json.dumps(poc_data)
-    #Getting old poc and will update that with present value at the end
-    visit_backup = PocBackup.objects.filter(visitentityid=str(visitid),entityidec=str(entityid)).values_list('poc','id')
-    if len(visit_backup)>0:
-        for visit in visit_backup:
-            old_poc= json.loads(visit[0])
-            poc.append(old_poc)
-        #del_poc_bckup=PocBackup.objects.filter(id = int(visit_backup[0][1])).delete()
     poc_backup = PocBackup(visitentityid=str(visitid),entityidec=str(entityid),docid=str(docid),poc=poc_backup_data)
     poc_backup.save()
     #Reading all values from document
-    #pront
     result = {}
     entity_detail="curl -s -H -X GET http://202.153.34.169:5984/drishti-form/_design/FormSubmission/_view/by_id/?key=%22"+str(document_id)+"%22"
     poc_output=commands.getoutput(entity_detail)
@@ -111,38 +102,40 @@ def poc_update(request):
     #Updating backup table with latest poc/pending status info
     visit_info = PocInfo.objects.filter(visitentityid=str(visitid),entityidec=str(entityid)).values_list('visitentityid','entityidec')
     if len(pending)==0:
-        anm_sms,patient_sms = docsms(anmId,patientph,poc_details)
+        anm_sms,patient_sms = docsms(anmId,"7207528943")
+        #print patientph,'patient_phone'
+        # sms_curl = 'curl -s -H -X GET http://10.10.11.6:8000/sendsms/?tel=["tel:'+anm_phone+'",'+'"tel:'+patient_phone+'"]&message="'+msg+'"'
+        # sms_output=commands.getoutput(sms_curl)
+        # smsput=json.loads(sms_output)
+        # if len(anm_details)>0:
+        #     anm_phone= anm_details[0][0]
         del_poc = PocInfo.objects.filter(visitentityid=str(visitid),entityidec=str(entityid)).delete()
     return HttpResponse(json.dumps({"status":"success"}))
 
-def docsms(anmId,patientph,poc_details):
-    patient_sms = "Dear patient your prescription "
-    if len(poc_details["investigations"]) > 0:
-        patient_sms+=" Investigations: "
-        for investigation in poc_details["investigations"]:
-            patient_sms = patient_sms+investigation
-    if len(poc_details["drugs"]) > 0:
-        patient_sms+=" drugs: "
-        for drugs in poc_details["drugs"]:
-            patient_sms = patient_sms+drugs["drugName"]+drugs["direction"]+drugs["frequency"]+drugs["drugQty"]+drugs["drugNoOfDays"]
-    if len(poc_details["diagnosis"]) > 0:
-        patient_sms+=" diagnosis: "
-        for diagnosis in poc_details["diagnosis"]:
-            patient_sms = patient_sms+diagnosis
+def docsms(anmId,patientph):
     anm_details = UserMasters.objects.filter(user_id=str(anmId)).values_list('phone_number','country')
     anm_country = str(anm_details[0][1])
     country_code= str(CountryTb.objects.filter(country_name=str(anm_country)).values_list('country_code')[0][0])
     anm_phone = str(anm_details[0][0])
     anm_phone = country_code+anm_phone[-int(settings.PHONE_NUMBER_LENGTH):]
+    #anm_phone ="+919550726256"
+    print anm_phone
     patient_phone = country_code+patientph[-int(settings.PHONE_NUMBER_LENGTH):]
-    msg = str(AppConfiguration.objects.filter(country_name__country_name=str(anm_country)).values_list("poc_text")[0][0])+datetime.now().strftime('%d-%b-%Y %H:%M:%S')
+    print patient_phone,anm_country
+    #country_id = CountryTb.object.get()
+    msg = str(AppConfiguration.objects.filter(country_name__country_name=str(anm_country)).values_list("poc_text")[0][0])
+    print msg
+    #msg="POC given"
     anm_sms_var = '{"phone":["tel:'+str(anm_phone)+'"], "text":"' +msg+'"}'
     anm_sms_curl= 'curl -i -H "Authorization: Token 78ffc91c6a5287d7cc7a9a68c4903cc61d87aecb" -H "Content-type: application/json"  -H "Accept: application/json" POST -d'+ "'"+anm_sms_var+"'"+' http://202.153.34.174/api/v1/messages.json '
+    print anm_sms_curl
     anm_sms_output = commands.getoutput(anm_sms_curl)
-    patient_sms=str(patient_sms)
-    patient_sms_var = '{"phone":["tel:'+str(patient_phone)+'"], "text":"' +patient_sms+'"}'
+    patient_sms_var = '{"phone":["tel:'+str(patient_phone)+'"], "text":"' +msg+'"}'
     patient_sms_curl= 'curl -i -H "Authorization: Token 78ffc91c6a5287d7cc7a9a68c4903cc61d87aecb" -H "Content-type: application/json"  -H "Accept: application/json" POST -d'+ "'"+patient_sms_var+"'"+' http://202.153.34.174/api/v1/messages.json '
+    print patient_sms_curl
+
     patient_sms_output = commands.getoutput(patient_sms_curl)
+
     return anm_sms_output,patient_sms_output
 
 def doctor_data(request):
@@ -154,16 +147,18 @@ def doctor_data(request):
         password = request.GET.get('pwd',"")
     end_res = '{}'
     doc_loc = str(UserMasters.objects.filter(user_id=str(doc_name),user_role="DOC").values_list('hospital')[0][0]).strip(" (PHC)")
+    print doc_loc
     resultdata=defaultdict(list)
     display_result=[]
     entity_list = PocInfo.objects.filter(phc=doc_loc).values_list('visitentityid','entityidec','pending','docid').distinct()
+    print entity_list
     if len(entity_list) == 0:
-    	return HttpResponse(json.dumps(display_result))
+        return HttpResponse(json.dumps(display_result))
     for entity in entity_list:
         if str(entity[2])!='None':
             if len(entity[2])>1 and str(doc_name) != str(entity[3]):
                 continue
-    	entity_detail_id=str(entity[1])
+        entity_detail_id=str(entity[1])
         ancvisit_detail="curl -s -H -X GET http://202.153.34.169:5984/drishti-form/_design/FormSubmission/_view/by_EntityId?key=%22"+str(entity[0])+"%22&descending=true"
         visit_output = commands.getoutput(ancvisit_detail)
         visit_data1 = json.loads(visit_output)
@@ -188,65 +183,107 @@ def doctor_data(request):
             #-----------------PNC DATA --------------
             if row[-1]['value'][0] == 'pnc_visit' or row[-1]['value'][0] == 'pnc_visit_edit':
                 doc_id=row[-1]['id']
-                for visitdata in row:
-                    pnc_tags = ["pncNumber","pncVisitDate","difficulties1","difficulties2","abdominalProblems","urineStoolProblems",
-                                "hasFeverSymptoms","breastProblems","vaginalProblems","bpSystolic","bpDiastolic","temperature","pulseRate",
-                                "bloodGlucoseData","weight","anmPoc","pncVisitPlace","pncVisitDate","isHighRisk","hbLevel"]
-                    f = lambda x: x[0].get("value") if len(x)>0 else ""
-                    fetched_dict = copyf(visitdata["value"][1]["form"]["fields"],"name",pnc_tags)
-                    visit["pncNumber"]=f(copyf(fetched_dict,"name","pncNumber"))
-                    visit["pncVisitDate"]=f(copyf(fetched_dict,"name","pncVisitDate"))
-                    visit["difficulties1"]=f(copyf(fetched_dict,"name","difficulties1"))
-                    visit["difficulties2"]=f(copyf(fetched_dict,"name","difficulties2"))
-                    visit["abdominalProblems"]=f(copyf(fetched_dict,"name","abdominalProblems"))
-                    visit["urineStoolProblems"]=f(copyf(fetched_dict,"name","urineStoolProblems"))
-                    visit["hasFeverSymptoms"]=f(copyf(fetched_dict,"name","hasFeverSymptoms"))
-                    visit["breastProblems"]=f(copyf(fetched_dict,"name","breastProblems"))
-                    visit["vaginalProblems"]=f(copyf(fetched_dict,"name","vaginalProblems"))
-                    visit["bpSystolic"]=f(copyf(fetched_dict,"name","bpSystolic"))
-                    visit["bpDiastolic"]=f(copyf(fetched_dict,"name","bpDiastolic"))
-                    visit["temperature"]=f(copyf(fetched_dict,"name","temperature"))
-                    visit["pulseRate"]=f(copyf(fetched_dict,"name","pulseRate"))
-                    visit["bloodGlucoseData"]=f(copyf(fetched_dict,"name","bloodGlucoseData"))
-                    visit["weight"]=f(copyf(fetched_dict,"name","weight"))
-                    visit["anmPoc"]=f(copyf(fetched_dict,"name","anmPoc"))
-                    visit["pncVisitPlace"]=f(copyf(fetched_dict,"name","pncVisitPlace"))
-                    visit["pncVisitDate"]=f(copyf(fetched_dict,"name","pncVisitDate"))
-                    visit["isHighRisk"]=f(copyf(fetched_dict,"name","isHighRisk"))
-                    visit["hbLevel"]=f(copyf(fetched_dict,"name","hbLevel"))
-                    visit['visit_type'] = 'PNC'
+                for visitdata in row[-1]['value'][1]['form']['fields']:
+
+                    key = visitdata.get('name')
+                    if 'value' in visitdata.keys():
+                        value = visitdata.get('value')
+                    else:
+                        value=''
+                    if key == 'pncNumber':
+                        visit['pncNumber']=value
+                    elif key=='pncVisitDate':
+                        visit['pncVisitDate']=value
+                    elif key == 'difficulties1':
+                        visit['difficulties1']=value
+                    elif key == 'difficulties2':
+                        visit['difficulties2']=value
+                    elif key == 'abdominalProblems':
+                        visit['abdominalProblems']=value
+                    elif key == 'urineStoolProblems':
+                        visit['urineStoolProblems']=value
+                    elif key == 'hasFeverSymptoms':
+                        visit['hasFeverSymptoms']=value
+                    elif key == 'breastProblems':
+                        visit['breastProblems']=value
+                    elif key == 'vaginalProblems':
+                        visit['vaginalProblems']=value
+                    elif key == 'bpSystolic':
+                        visit['bpSystolic']=value
+                    elif key == 'bpDiastolic':
+                        visit['bpDiastolic']=value
+                    elif key == 'temperature':
+                        visit['temperature']=value
+                    elif key == 'pulseRate':
+                        visit['pulseRate']=value
+                    elif key == 'bloodGlucoseData':
+                        visit['bloodGlucoseData']=value
+                    elif key == 'weight':
+                        visit['weight']=value
+                    elif key == 'anmPoc':
+                        visit['anmPoc']=value
+                    elif key == 'pncVisitPlace':
+                        visit['pncVisitPlace']=value
+                    elif key == 'pncVisitDate':
+                        visit['pncVisitDate']=value
+                    elif key == 'isHighRisk':
+                        visit['isHighRisk']=value
+                    elif key == 'hbLevel':
+                        visit['Hblevel']=value
+                        visit['visit_type'] = 'PNC'
                     visit["entityid"] = entity[0]
                     visit['id']=doc_id
+                # if str(entity[2]) == "None":
+                #     print "pendingif"
+                #     visit["pending"]=""
+                # else:
+                #     visit["pending"]=entity[2]
                 visit_data.append(visit)
 
             elif row[-1]['value'][0] == 'anc_visit' or row[-1]['value'][0] == 'anc_visit_edit':
                 doc_id=row[-1]['id']
-                for visitdata in row:
-                    anc_tags = ["ancVisitNumber","ancNumber","ancVisitPerson","ancVisitDate","riskObservedDuringANC","bpSystolic","bpDiastolic",
-                                "temperature","pulseRate","bloodGlucoseData","weight","anmPoc","isHighRisk","fetalData"]
-                    f = lambda x: x[0].get("value") if len(x)>0 else ""
-                    fetched_dict = copyf(visitdata["value"][1]["form"]["fields"],"name",anc_tags)
-                    visit["ancVisitNumber"]=f(copyf(fetched_dict,"name","ancVisitNumber"))
-                    visit["ancNumber"]=f(copyf(fetched_dict,"name","ancNumber"))
-                    visit["ancVisitPerson"]=f(copyf(fetched_dict,"name","ancVisitPerson"))
-                    visit["ancVisitDate"]=f(copyf(fetched_dict,"name","ancVisitDate"))
-                    visit["riskObservedDuringANC"]=f(copyf(fetched_dict,"name","riskObservedDuringANC"))
-                    visit["bpSystolic"]=f(copyf(fetched_dict,"name","bpSystolic"))
-                    visit["bpDiastolic"]=f(copyf(fetched_dict,"name","bpDiastolic"))
-                    visit["temperature"]=f(copyf(fetched_dict,"name","temperature"))
-                    visit["pulseRate"]=f(copyf(fetched_dict,"name","pulseRate"))
-                    visit["bpSystolic"]=f(copyf(fetched_dict,"name","bpSystolic"))
-                    visit["bpDiastolic"]=f(copyf(fetched_dict,"name","bpDiastolic"))
-                    visit["temperature"]=f(copyf(fetched_dict,"name","temperature"))
-                    visit["pulseRate"]=f(copyf(fetched_dict,"name","pulseRate"))
-                    visit["bloodGlucoseData"]=f(copyf(fetched_dict,"name","bloodGlucoseData"))
-                    visit["weight"]=f(copyf(fetched_dict,"name","weight"))
-                    visit["anmPoc"]=f(copyf(fetched_dict,"name","anmPoc"))
-                    visit["isHighRisk"]=f(copyf(fetched_dict,"name","isHighRisk"))
-                    visit["fetalData"]=f(copyf(fetched_dict,"name","fetalData"))
-                    visit['visit_type'] = 'ANC'
+                for visitdata in row[-1]['value'][1]['form']['fields']:
+                    key = visitdata.get('name')
+                    if 'value' in visitdata.keys():
+                        value = visitdata.get('value')
+                    else:
+                        value=''
+                    if key == 'ancVisitNumber':
+                        visit['ancVisitNumber']=value
+                    elif key == 'ancNumber':
+                        visit['ancNumber']=value
+                    elif key == 'ancVisitPerson':
+                        visit['ancVisitPerson']=value
+                    elif key=='ancVisitDate':
+                        visit['ancVisitDate']=value
+                    elif key == 'riskObservedDuringANC':
+                        visit['riskObservedDuringANC']=value
+                    elif key == 'bpSystolic':
+                        visit['bpSystolic']=value
+                    elif key == 'bpDiastolic':
+                        visit['bpDiastolic']=value
+                    elif key == 'temperature':
+                        visit['temperature']=value
+                    elif key == 'pulseRate':
+                        visit['pulseRate']=value
+                    elif key == 'bloodGlucoseData':
+                        visit['bloodGlucoseData']=value
+                    elif key == 'weight':
+                        visit['weight']=value
+                    elif key == 'anmPoc':
+                        visit['anmPoc']=value
+                    elif key == 'isHighRisk':
+                        visit['isHighRisk']=value
+                    elif key == 'fetalData':
+                        visit['fetalData']=value
+                        visit['visit_type'] = 'ANC'
                     visit["entityid"] = entity[0]
                     visit['id']=doc_id
+                # if str(entity[2]) == "None":
+                #     print "pendingif"
+                #     visit["pending"]=""
+                # else:
+                #     visit["pending"]=entity[2]
                 visit_data.append(visit)
             elif row[-1]['value'][0] == 'child_illness' or row[-1]['value'][0] == 'child_illness_edit':
 
@@ -291,6 +328,11 @@ def doctor_data(request):
                     elif key == 'id':
                         visit['id']=doc_id
                         visit["entityid"] = entity[0]
+                # if str(entity[2]) == "None":
+                #     print "pendingif"
+                #     visit["pending"]=""
+                # else:
+                #     visit["pending"]=entity[2]
                 visit_data.append(visit)
         entity_detail="curl -s -H -X GET http://202.153.34.169:5984/drishti-form/_design/FormSubmission/_view/by_EntityId?key=%22"+entity_detail_id+"%22&descending=true"
         poc_output=commands.getoutput(entity_detail)
@@ -318,6 +360,12 @@ def doctor_data(request):
                                 visit['edd']=edd
                                 visit['lmp']=lmp
                                 visit_data.append(visit)
+                            # elif key=='phoneNumber':
+                            #     temp={}
+                            #     print key,value
+                            #     temp={"phoneNumber":value}
+                            #     #result.update(temp)
+
                         elif row1[i]['value'][0] == "child_registration_oa":
                             key = data.get('name')
                             if 'value' in child_data.keys():
@@ -334,6 +382,11 @@ def doctor_data(request):
                                 temp={}
                                 temp={"wifeName":value}
                                 result.update(temp)
+                            # elif key=='phoneNumber':
+                            #     temp={}
+                            #     temp={"phoneNumber":value}
+                            #     print key,value
+                                #result.update(temp)
                             elif key == 'fatherName':
                                 temp={}
                                 temp={"husbandName":value}
@@ -406,6 +459,7 @@ def doctor_data(request):
                                 visit['edd']=value
                             elif key=='phoneNumber':
                                 temp={}
+                                print key,value
                                 temp={"phoneNumber":value}
                                 result.update(temp)
                             elif key == 'motherName':
@@ -438,7 +492,7 @@ def user_auth(request):
     pwd = hashlib.sha1()
     pwd.update(password)
     password = pwd.hexdigest()
-    user_details=UserMasters.objects.filter(user_id=str(username),password=password).values_list('user_role','id','name','country',)
+    user_details=UserMasters.objects.filter(user_id=username,password=password).values_list('user_role','id','name','country',)
     if len(user_details) ==0:
         return HttpResponse('{"status":"Invalid username/password"}')
     user_role=user_details[0][0]
@@ -454,33 +508,17 @@ def user_auth(request):
         location = {}
         anm_details=UserMasters.objects.filter(id=int(user_details[0][1])).values_list('country','county','district','subdistrict','subcenter','villages','phone_number','email')
         subcenter = str(anm_details[0][4])
-        country_obj = CountryTb.objects.get(country_name=str(anm_details[0][0]))
-        country_code = CountryTb.objects.filter(country_name=str(anm_details[0][0])).values_list("country_code")[0][0]
         anm_phc = HealthCenters.objects.filter(hospital_name=subcenter,hospital_type='Subcenter').values_list('parent_hospital')
+        print anm_phc,anm_details[0][4]
         phc = str(anm_phc[0][0])
         location["phcName"]=phc
         location["subCenter"]=subcenter
         location["villages"]=str(anm_details[0][5]).split(',')
         drug_details = drug_info()
         config_fields = AppConfiguration.objects.filter(country_name__country_name=str(user_details[0][3])).values_list('wife_age_min','wife_age_max','husband_age_min','husband_age_max','temperature_units')
-        form_fields = FormFields.objects.filter(country__country_name=str(user_details[0][3])).values_list("form_name","field1","field2","field3","field4","field5")
         if len(config_fields) >0:
             config_data = {"wifeAgeMin":config_fields[0][0],"wifeAgeMax":config_fields[0][1],"husbandAgeMin":config_fields[0][2],"husbandAgeMax":config_fields[0][3],"temperature":config_fields[0][4]}
-        if len(form_fields)>0:
-            form_values=[]
-            for form in form_fields:
-                if form[0] == "anc_registration":
-                    form_lables={"ANCRegistration":[str(label) for label in form[1:] if label !=""]}
-                elif form[0] == "ec_registration":
-                    form_lables={"ECRegistration":[str(label) for label in form[1:] if label !=""]}
-                elif form[0] == "fp_registration":
-                    form_lables={"FPRegistration":[str(label) for label in form[1:] if label !=""]}
-                elif form[0] == "pnc_registration":
-                    form_lables={"PNCRegistration":[str(label) for label in form[1:] if label !=""]}
-                elif form[0] == "child_registration":
-                    form_lables={"ChildRegistration":[str(label) for label in form[1:] if label !=""]}
-                form_values.append(form_lables)
-        user_data["personal_info"]={"location":location,"phone":str(anm_details[0][6]),"email":str(anm_details[0][7]),"drugs":drug_details,"configuration":config_data,"countryCode":str(country_code),"formLabels":str(form_values)}
+        user_data["personal_info"]={"location":location,"phone":str(anm_details[0][6]),"email":str(anm_details[0][7]),"drugs":drug_details,"configuration":config_data}
     end_res= json.dumps(user_data)
     return HttpResponse(end_res)
 
@@ -493,6 +531,9 @@ def drug_info():
             for d in drug:
                 drug_result[str(disease)].append(d[0])
     return dict(drug_result)
+
+
+
 
 def vitals_data(request):
     vital_readings=[]
@@ -534,15 +575,15 @@ def vitals_data(request):
 def copyf(dictlist, key, valuelist):
       return [dictio for dictio in dictlist if dictio[key] in valuelist]
 
-# def doctor_history(request):
-#     if request.method == 'GET':
-#         docname = request.GET.get('name','')
-#     else:
-#         docname = request.POST.get('name','')
-#     backupinfo = PocBackup.objects.filter(docid = str(docname)).values_list('visitentityid','poc')
-#     for data in backupinfo:
-#         print data
-#     return HttpResponse('')
+def doctor_history(request):
+    if request.method == 'GET':
+        docname = request.GET.get('name','')
+    else:
+        docname = request.POST.get('name','')
+    backupinfo = PocBackup.objects.filter(docid = str(docname)).values_list('visitentityid','poc')
+    for data in backupinfo:
+        print data
+    return HttpResponse('')
 
 def docrefer(request):
     if request.method=="GET":
@@ -550,7 +591,10 @@ def docrefer(request):
         visitid = request.GET.get("visitid","")
         entityid = request.GET.get("entityid","")
     doc_details = UserMasters.objects.filter(user_id=str(doc_id)).values_list("hospital")
+    print doc_details[0][0]
     hospital_details = HealthCenters.objects.filter(hospital_name=str(doc_details[0][0])).values_list("hospital_type")
+    print hospital_details
+    print doc_details,hospital_details,'details'
     if str(hospital_details[0][0])=="PHC":
         level = 2
         location = HealthCenters.objects.filter(hospital_name=str(doc_details[0][0]),hospital_type='PHC').values_list("parent_hospital")[0][0]
@@ -574,8 +618,10 @@ def send_sms(request):
     if request.method == "GET":
         phone_num = request.GET.get("tel","")
         msg = str(request.GET.get("message",""))
+    print phone_num,msg
     sms_var = '{"phone":'+str(phone_num)+', "text":' +msg+'}'
     sms_curl= 'curl -i -H "Authorization: Token 78ffc91c6a5287d7cc7a9a68c4903cc61d87aecb" -H "Content-type: application/json"  -H "Accept: application/json" POST -d'+ "'"+sms_var+"'"+' http://202.153.34.174/api/v1/messages.json '
+    print sms_curl
     sms_output = commands.getoutput(sms_curl)
     return HttpResponse('SMS sent')
 
@@ -584,6 +630,7 @@ def admin_hospital(request):
     country_name=[]
     for n in countryname:
         country_name.append(n[0])
+
     c = {}
     c.update(csrf(request))
     return render_to_response('addhospital1.html',{'x':country_name,'csrf_token':c['csrf_token']})
@@ -591,6 +638,7 @@ def admin_hospital(request):
 def get_hospital(request):
     if request.method == "GET":
         type_name= request.GET.get('devata',"")
+
     elif request.method == "POST":
         type_name= request.GET.get('devata',"")
 
@@ -650,16 +698,50 @@ def save_hospital(request):
         villages = request.POST.get('hos_village','')
         parenthos = request.POST.get('parent_hos','')
         active=request.POST.get('active','')
+    print county,district
     status = 0
     if str(active) == 'true':
         status = 1
     if len(villages) == 0:
         villages = 'null'
-    hospital_details = HealthCenters(hospital_name=str(hos_name),hospital_type=str(hostype),hospital_address=str(address),country_name=str(country),county_name=str(county),district_name=str(district),subdistrict_name=str(subdistrict),parent_hospital=str(parenthos),villages=str(villages),active=status)
+    country_obj = CountryTb.objects.get(country_name=str(country))
+    county_obj=''
+    district_obj=''
+    subdistrict_obj=''
+    if len(county)==0:
+        # county_obj = CountyTb.objects.get(county_name=str(county))
+        hospital_details = HealthCenters(hospital_name=str(hos_name),hospital_type=str(hostype),hospital_address=str(address),country_name=country_obj,active=status)
+        hospital_details.save()
+        x = {"result":'/admin/'}
+        x=json.dumps(x)
+        return HttpResponse(x)    
+    if len(district)==0:
+        county_obj = CountyTb.objects.get(county_name=str(county))
+        hospital_details = HealthCenters(hospital_name=str(hos_name),hospital_type=str(hostype),hospital_address=str(address),country_name=country_obj,county_name=county_obj,parent_hospital=str(parenthos),active=status)
+        hospital_details.save()
+        x = {"result":'/admin/'}
+        x=json.dumps(x)
+        return HttpResponse(x)
+        # district_obj = Disttab.objects.get(district_name=str(district))
+    if len(str(subdistrict)) ==0:
+        # subdistrict_obj = SubdistrictTab.objects.get(subdistrict=str(subdistrict))
+        county_obj = CountyTb.objects.get(county_name=str(county))
+        district_obj = Disttab.objects.get(district_name=str(district))
+        hospital_details = HealthCenters(hospital_name=str(hos_name),hospital_type=str(hostype),hospital_address=str(address),country_name=country_obj,county_name=county_obj,district_name=district_obj,parent_hospital=str(parenthos),active=status)
+        hospital_details.save()
+        x = {"result":'/admin/'}
+        x=json.dumps(x)
+        return HttpResponse(x)
+
+    county_obj = CountyTb.objects.get(county_name=str(county))
+    district_obj = Disttab.objects.get(district_name=str(district))
+    subdistrict_obj = SubdistrictTab.objects.get(subdistrict=str(subdistrict))
+    hospital_details = HealthCenters(hospital_name=str(hos_name),hospital_type=str(hostype),hospital_address=str(address),country_name=country_obj,county_name=county_obj,district_name=district_obj,subdistrict_name=subdistrict_obj,parent_hospital=str(parenthos),villages=str(villages),active=status)
     hospital_details.save()
     x = {"result":'/admin/'}
     x=json.dumps(x)
     return HttpResponse(x)
+
 
 
 
@@ -677,53 +759,18 @@ def edit_hospital(request,hospital_id):
     for hos_types in hospital_types:
         if hos_types not in hostype:
             hostype.append(hos_types)
-
-    country=[]
-    names= CountryTb.objects.filter(active=True).values_list('country_name')
-    country.insert(0,edit_details.country_name)
-    for country_data in names:
-        if country_data[0] not in country:
-            country.append(str(country_data[0]))
-
-    county = []
-    county_name = CountyTb.objects.filter(country_name__country_name=str(edit_details.country_name),active=True).values_list('county_name')
-    county.insert(0,edit_details.county_name)
-    for name in county_name:
-        if name[0] not in county:
-            county.append(str(name[0]))
-
-    district = []
-    district_name = Disttab.objects.filter(county_name=str(edit_details.county_name),active=True).values_list('district_name')
-    district.insert(0,edit_details.district_name)
-    for name in district_name:
-        if name[0] not in district:
-            district.append(str(name[0]))
-    subdistrict = []
-    subdistrict_name = SubdistrictTab.objects.filter(district=str(edit_details.district_name),active=True).values_list('subdistrict')
-    subdistrict.insert(0,edit_details.subdistrict_name)
-    for name in subdistrict_name:
-        if name[0] not in subdistrict:
-            subdistrict.append(str(name[0]))
-
-    location = []
-    location_name = LocationTab.objects.filter(subdistrict=str(edit_details.subdistrict_name),active=True).values_list('location')
-    location.insert(0,edit_details.location)
-    for name in location_name:
-        if name[0] not in subdistrict:
-            location.append(str(name[0]))
-
     parent_hos =[]
     parent_hos_names=[]
     if str(edit_details.hospital_type) == 'County':
-        parent_hos_names = HealthCenters.objects.filter(hospital_type='Country',country_name=str(edit_details.country_name),active=True).values_list('hospital_name')
+        parent_hos_names = HealthCenters.objects.filter(hospital_type='Country',country_name=int(edit_details.country_name.id),active=True).values_list('hospital_name')
     elif str(edit_details.hospital_type) == 'District':
-        parent_hos_names = HealthCenters.objects.filter(hospital_type='County',county_name=str(edit_details.county_name),active=True).values_list('hospital_name')
+        parent_hos_names = HealthCenters.objects.filter(hospital_type='County',county_name=int(edit_details.county_name.id),active=True).values_list('hospital_name')
     elif str(edit_details.hospital_type) == 'SubDistrict':
-        parent_hos_names = HealthCenters.objects.filter(hospital_type='District',district_name=str(edit_details.district_name),active=True).values_list('hospital_name')
+        parent_hos_names = HealthCenters.objects.filter(hospital_type='District',district_name=int(edit_details.district_name.id),active=True).values_list('hospital_name')
     elif str(edit_details.hospital_type) == 'PHC':
-        parent_hos_names = HealthCenters.objects.filter(hospital_type='SubDistrict',subdistrict_name=str(edit_details.subdistrict_name),active=True).values_list('hospital_name')
+        parent_hos_names = HealthCenters.objects.filter(hospital_type='SubDistrict',subdistrict_name=int(edit_details.subdistrict_name.id),active=True).values_list('hospital_name')
     elif str(edit_details.hospital_type) == 'Subcenter':
-        parent_hos_names = HealthCenters.objects.filter(hospital_type='PHC',subdistrict_name=str(edit_details.subdistrict_name),active=True).values_list('hospital_name')
+        parent_hos_names = HealthCenters.objects.filter(hospital_type='PHC',subdistrict_name=int(edit_details.subdistrict_name.id),active=True).values_list('hospital_name')
     if str(edit_details.parent_hospital) == 'null':
         parent_hos =''
     else:
@@ -743,12 +790,130 @@ def edit_hospital(request,hospital_id):
         c_status = 'true'
     c = {}
     c.update(csrf(request))
+    country=[]
+    names= CountryTb.objects.filter(active=True).values_list('country_name')
+    e_country_name = CountryTb.objects.filter(id=int(edit_details.country_name.id)).values_list("country_name")[0][0]
+    country.insert(0,e_country_name)
+    for country_data in names:
+        if country_data[0] not in country:
+            country.append(str(country_data[0]))
+    if str(edit_details.county_name)=='None':
+        country=[]
+        names= CountryTb.objects.filter(active=True).values_list('country_name')
+        e_country_name = CountryTb.objects.filter(id=int(edit_details.country_name.id)).values_list("country_name")[0][0]
+        country.insert(0,e_country_name)
+        for country_data in names:
+            if country_data[0] not in country:
+                country.append(str(country_data[0]))
+        return render_to_response('edithospital1.html',{'edit_details':edit_details,'country':country,'parenthos':parent_hos,'hostype':hostype,'active':c_status,'csrf_token':c['csrf_token']})
+
+    if str(edit_details.district_name)=='None':
+        county = []
+        county_name = CountyTb.objects.filter(country_name__country_name=str(edit_details.country_name),active=True).values_list('county_name')
+        e_county_name = CountyTb.objects.filter(id=int(edit_details.county_name.id)).values_list("county_name")[0][0]
+        county.insert(0,e_county_name)
+        for name in county_name:
+            if name[0] not in county:
+                county.append(str(name[0]))
+        district = []
+        district_name = Disttab.objects.filter(county_name=edit_details.county_name,active=True).values_list('district_name')
+        e_district_name = Disttab.objects.filter(id=edit_details.district_name).values_list("district_name")
+        district.insert(0,e_district_name)
+        for name in district_name:
+            if name[0] not in district:
+                district.append(str(name[0]))
+        return render_to_response('edithospital1.html',{'edit_details':edit_details,'country':country,'county':county,'hostype':hostype,'parenthos':parent_hos,'active':c_status,'csrf_token':c['csrf_token']})
+    if str(edit_details.subdistrict_name)=='None':
+        county = []
+        county_name = CountyTb.objects.filter(country_name__country_name=str(edit_details.country_name),active=True).values_list('county_name')
+        e_county_name = CountyTb.objects.filter(id=int(edit_details.county_name.id)).values_list("county_name")[0][0]
+        county.insert(0,e_county_name)
+        for name in county_name:
+            if name[0] not in county:
+                county.append(str(name[0]))
+        district = []
+        district_name = Disttab.objects.filter(county_name=edit_details.county_name,active=True).values_list('district_name')
+        e_district_name = Disttab.objects.filter(id=edit_details.district_name.id).values_list("district_name")[0][0]
+        district.insert(0,e_district_name)
+        for name in district_name:
+            if name[0] not in district:
+                district.append(str(name[0]))
+        #subdistrict = []
+        # subdistrict_name = SubdistrictTab.objects.filter(district=edit_details.district_name,active=True).values_list('subdistrict')
+        # e_subdistrict_name = SubdistrictTab.objects.filter(id=edit_details.subdistrict_name.values_list("subdistrict")[0][0]
+        # subdistrict.insert(0,e_subdistrict_name)
+        # for name in subdistrict_name:
+        #     if name[0] not in subdistrict:
+        #         subdistrict.append(str(name[0]))
+        return render_to_response('edithospital1.html',{'edit_details':edit_details,'country':country,'county':county,'district':district,'hostype':hostype,'parenthos':parent_hos,'villages':villages,'active':c_status,'csrf_token':c['csrf_token']})
+    county = []
+    county_name = CountyTb.objects.filter(country_name__country_name=str(edit_details.country_name),active=True).values_list('county_name')
+    e_county_name = CountyTb.objects.filter(id=int(edit_details.county_name.id)).values_list("county_name")[0][0]
+    county.insert(0,e_county_name)
+    for name in county_name:
+        if name[0] not in county:
+            county.append(str(name[0]))
+
+    district = []
+    district_name = Disttab.objects.filter(county_name=int(edit_details.county_name.id),active=True).values_list('district_name')
+    e_district_name = Disttab.objects.filter(id=int(edit_details.district_name.id)).values_list("district_name")[0][0]
+    district.insert(0,e_district_name)
+    for name in district_name:
+        if name[0] not in district:
+            district.append(str(name[0]))
+    subdistrict = []
+    subdistrict_name = SubdistrictTab.objects.filter(district=int(edit_details.district_name.id),active=True).values_list('subdistrict')
+    e_subdistrict_name = SubdistrictTab.objects.filter(id=int(edit_details.subdistrict_name.id)).values_list("subdistrict")[0][0]
+    
+    subdistrict.insert(0,e_subdistrict_name)
+    for name in subdistrict_name:
+        if name[0] not in subdistrict:
+            subdistrict.append(str(name[0]))
+    
+    # location = []
+    # location_name = LocationTab.objects.filter(subdistrict=str(edit_details.subdistrict_name),active=True).values_list('location')
+    # location.insert(0,edit_details.location)
+    # for name in location_name:
+    #     if name[0] not in subdistrict:
+    #         location.append(str(name[0]))
+
+    # parent_hos =[]
+    # parent_hos_names=[]
+    # if str(edit_details.hospital_type) == 'County':
+    #     parent_hos_names = HealthCenters.objects.filter(hospital_type='Country',country_name=int(edit_details.country_name.id),active=True).values_list('hospital_name')
+    # elif str(edit_details.hospital_type) == 'District':
+    #     parent_hos_names = HealthCenters.objects.filter(hospital_type='County',county_name=int(edit_details.county_name.id),active=True).values_list('hospital_name')
+    # elif str(edit_details.hospital_type) == 'SubDistrict':
+    #     parent_hos_names = HealthCenters.objects.filter(hospital_type='District',district_name=int(edit_details.district_name.id),active=True).values_list('hospital_name')
+    # elif str(edit_details.hospital_type) == 'PHC':
+    #     parent_hos_names = HealthCenters.objects.filter(hospital_type='SubDistrict',subdistrict_name=int(edit_details.subdistrict_name.id),active=True).values_list('hospital_name')
+    # elif str(edit_details.hospital_type) == 'Subcenter':
+    #     parent_hos_names = HealthCenters.objects.filter(hospital_type='PHC',subdistrict_name=int(edit_details.subdistrict_name.id),active=True).values_list('hospital_name')
+    # if str(edit_details.parent_hospital) == 'null':
+    #     parent_hos =''
+    # else:
+    #     parent_hos.insert(0,edit_details.parent_hospital)
+    #     for hospital in parent_hos_names:
+    #         hos_temp = hospital[0].strip()
+    #         if hos_temp not in parent_hos:
+    #             parent_hos.append(str(hos_temp))
+    # villages=[]
+    # if str(edit_details.villages)=='null':
+    #     villages=''
+    # else:
+    #     villages = edit_details.villages.split(',')
+    # status = edit_details.active
+    # c_status='false'
+    # if status == True:
+    #     c_status = 'true'
+    # c = {}
+    # c.update(csrf(request))
     return render_to_response('edithospital1.html',{'edit_details':edit_details,'country':country,'county':county,'district':district,'subdistrict':subdistrict,'hostype':hostype,'parenthos':parent_hos,'villages':villages,'active':c_status,'csrf_token':c['csrf_token']})
 
 def update_hospitaldetail(request):
 
     global hosp_id
-
+    print 'golbal'
 
     if request.method == 'GET':
         hos_name = request.GET.get('name','')
@@ -773,10 +938,40 @@ def update_hospitaldetail(request):
         villages = request.POST.get('hos_village','')
         parenthos = request.POST.get('parent_hos','')
         active=request.POST.get('active','')
+    # print country,county,district,subdistrict
     status = 0
     if str(active) == 'true':
         status = 1
-    edit_hospital = HealthCenters.objects.filter(id=hosp_id).update(hospital_name=str(hos_name),hospital_type=str(hostype),hospital_address=str(address),country_name=str(country),county_name=str(county),district_name=str(district),subdistrict_name=str(subdistrict),parent_hospital=str(parenthos),villages=str(villages),active=status)
+    country_obj = CountryTb.objects.get(country_name=str(country))
+    if len(county)==0:
+        # county_obj = CountyTb.objects.get(county_name=str(county))
+        edit_hospital = HealthCenters.objects.filter(id=hosp_id).update(hospital_name=str(hos_name),hospital_type=str(hostype),hospital_address=str(address),country_name=country_obj,parent_hospital=str(parenthos),active=status)
+        x = {"result":'/admin/'}
+        x=json.dumps(x)
+        return HttpResponse(x)    
+    if str(district)=='null':
+        county_obj = CountyTb.objects.get(county_name=str(county))
+        edit_hospital = HealthCenters.objects.filter(id=hosp_id).update(hospital_name=str(hos_name),hospital_type=str(hostype),hospital_address=str(address),country_name=country_obj,county_name=county_obj,parent_hospital=str(parenthos),active=status)
+        
+        x = {"result":'/admin/'}
+        x=json.dumps(x)
+        return HttpResponse(x)
+        # district_obj = Disttab.objects.get(district_name=str(district))
+    if str(subdistrict) =='null':
+        # subdistrict_obj = SubdistrictTab.objects.get(subdistrict=str(subdistrict))
+        county_obj = CountyTb.objects.get(county_name=str(county))
+        district_obj = Disttab.objects.get(district_name=str(district))
+        edit_hospital = HealthCenters.objects.filter(id=hosp_id).update(hospital_name=str(hos_name),hospital_type=str(hostype),hospital_address=str(address),country_name=country_obj,county_name=county_obj,district_name=district_obj,parent_hospital=str(parenthos),active=status)
+        
+        x = {"result":'/admin/'}
+        x=json.dumps(x)
+        return HttpResponse(x)
+    
+    county_obj = CountyTb.objects.get(county_name=str(county))
+    district_obj = Disttab.objects.get(district_name=str(district))
+    subdistrict_obj = SubdistrictTab.objects.get(subdistrict=str(subdistrict))
+    print subdistrict_obj,'subgjuhjjk',county_obj  
+    edit_hospital = HealthCenters.objects.filter(id=hosp_id).update(hospital_name=str(hos_name),hospital_type=str(hostype),hospital_address=str(address),country_name=country_obj,county_name=county_obj,district_name=district_obj,subdistrict_name=subdistrict_obj,parent_hospital=str(parenthos),villages=str(villages),active=status)
 
     x = {"result":1}
     x=json.dumps(x)
@@ -825,17 +1020,35 @@ def parenthos_detail(request):
         p_subdistrict_name = str(request.GET.get('subdistrict',''))
         # p_location = str(request.GET.get('location',''))
         p_hostype = str(request.GET.get('hos_type',''))
+    country_obj = CountryTb.objects.get(country_name=str(p_country_name))
+    # county_obj = CountyTb.objects.get(county_name=str(p_county_name))
+    # district_obj = Disttab.objects.get(district_name=str(p_district_name))
+    # subdistrict_obj = SubdistrictTab.objects.get(subdistrict=str(p_subdistrict_name))
     if p_hostype == 'County':
-        parent_hos_names = HealthCenters.objects.filter(hospital_type='Country',country_name=p_country_name,active=True).values_list('hospital_name')
+        county_obj = CountyTb.objects.get(county_name=str(p_county_name))
+        print county_obj
+        parent_hos_names = HealthCenters.objects.filter(hospital_type='Country',country_name=country_obj,active=True).values_list('hospital_name')
+        print parent_hos_names
     elif p_hostype == 'District':
-        parent_hos_names = HealthCenters.objects.filter(hospital_type='County',county_name=p_county_name,active=True).values_list('hospital_name')
+        county_obj = CountyTb.objects.get(county_name=str(p_county_name))
+        district_obj = Disttab.objects.get(district_name=str(p_district_name))
+        parent_hos_names = HealthCenters.objects.filter(hospital_type='County',county_name=county_obj,active=True).values_list('hospital_name')
     elif p_hostype == 'SubDistrict':
-        parent_hos_names = HealthCenters.objects.filter(hospital_type='District',district_name=p_district_name,active=True).values_list('hospital_name')
+        county_obj = CountyTb.objects.get(county_name=str(p_county_name))
+        district_obj = Disttab.objects.get(district_name=str(p_district_name))
+        subdistrict_obj = SubdistrictTab.objects.get(subdistrict=str(p_subdistrict_name))
+        parent_hos_names = HealthCenters.objects.filter(hospital_type='District',district_name=district_obj,active=True).values_list('hospital_name')
     elif p_hostype == 'PHC':
-        parent_hos_names = HealthCenters.objects.filter(hospital_type='SubDistrict',subdistrict_name=p_subdistrict_name,active=True).values_list('hospital_name')
+        county_obj = CountyTb.objects.get(county_name=str(p_county_name))
+        district_obj = Disttab.objects.get(district_name=str(p_district_name))
+        subdistrict_obj = SubdistrictTab.objects.get(subdistrict=str(p_subdistrict_name))
+        parent_hos_names = HealthCenters.objects.filter(hospital_type='SubDistrict',subdistrict_name=subdistrict_obj,active=True).values_list('hospital_name')
     elif p_hostype == 'Subcenter':
-        parent_hos_names = HealthCenters.objects.filter(hospital_type='PHC',subdistrict_name=p_subdistrict_name,active=True).values_list('hospital_name')
-        villages_data = LocationTab.objects.filter(subdistrict=p_subdistrict_name,active=True).values_list('location')
+        county_obj = CountyTb.objects.get(county_name=str(p_county_name))
+        district_obj = Disttab.objects.get(district_name=str(p_district_name))
+        subdistrict_obj = SubdistrictTab.objects.get(subdistrict=str(p_subdistrict_name))
+        parent_hos_names = HealthCenters.objects.filter(hospital_type='PHC',subdistrict_name=subdistrict_obj,active=True).values_list('hospital_name')
+        villages_data = LocationTab.objects.filter(subdistrict=subdistrict_obj,active=True).values_list('location')
         if len(villages_data) > 0:
             for v in villages_data:
                 village.append(v[0])
@@ -884,19 +1097,58 @@ def save_usermaintenance(request):
         active = str(request.POST.get('active',''))
 
 
-
+    
     pwd = hashlib.sha1()
     pwd.update(password)
     password = pwd.hexdigest()
     status=0
     if str(active) =='true':
         status=1
+    country_obj = CountryTb.objects.get(country_name=str(countryname))
+    
+    #print userrole,userid,first_name,last_name,password,mobile,email,village,country_obj,county_obj,district_obj,subdistrict_obj,hospital_name
+
     if str(userrole) == 'ANM':
-        village_details = UserMasters(user_role=str(userrole),user_id=str(userid),name=str(first_name),lastname=str(last_name),password=str(password),villages=str(village),phone_number=str(mobile),email=str(email),country=str(countryname),county=str(countyname),district=str(districtname),subdistrict=str(subdistrictname),subcenter=str(subcentername),active=status)
+        county_obj = CountyTb.objects.get(county_name=str(countyname))
+        district_obj = Disttab.objects.get(district_name=str(districtname))
+        subdistrict_obj = SubdistrictTab.objects.get(subdistrict=str(subdistrictname))
+        subcenter = HealthCenters.objects.get(hospital_name=str(subcentername))
+        village_details = UserMasters(user_role=str(userrole),user_id=str(userid),name=str(first_name),lastname=str(last_name),password=str(password),villages=str(village),phone_number=str(mobile),email=str(email),country=country_obj,county=county_obj,district=district_obj,subdistrict=subdistrict_obj,subcenter=subcenter,active=status)
         village_details.save()
 
     elif str(userrole) == 'DOC':
-        village_details = UserMasters(user_role=str(userrole),user_id=str(userid),name=str(first_name),lastname=str(last_name),password=str(password),hospital=str(hospital_name),phone_number=str(mobile),email=str(email),country=str(countryname),county=str(countyname),district=str(districtname),subdistrict=str(subdistrictname),active=status)
+        if len(countyname)==0:
+
+            hospital_name=HealthCenters.objects.get(hospital_name=str(hospital_name))
+            village_details = UserMasters(user_role=str(userrole),user_id=str(userid),name=str(first_name),lastname=str(last_name),password=str(password),hospital=hospital_name,phone_number=str(mobile),email=str(email),country=country_obj,active=status)
+            village_details.save()
+            x = {"result":1}
+            x=json.dumps(x)
+            return HttpResponse(x)
+        if len(districtname)==0:
+            county_obj = CountyTb.objects.get(county_name=str(countyname))
+            hospital_name=HealthCenters.objects.get(hospital_name=str(hospital_name))
+            village_details = UserMasters(user_role=str(userrole),user_id=str(userid),name=str(first_name),lastname=str(last_name),password=str(password),hospital=hospital_name,phone_number=str(mobile),email=str(email),country=country_obj,county=county_obj,active=status)
+            village_details.save()
+            x = {"result":1}
+            x=json.dumps(x)
+            return HttpResponse(x)
+        if len(subdistrictname)==0:
+            county_obj = CountyTb.objects.get(county_name=str(countyname))
+            district_obj = Disttab.objects.get(district_name=str(districtname))
+            hospital_name=HealthCenters.objects.get(hospital_name=str(hospital_name))
+            village_details = UserMasters(user_role=str(userrole),user_id=str(userid),name=str(first_name),lastname=str(last_name),password=str(password),hospital=hospital_name,phone_number=str(mobile),email=str(email),country=country_obj,county=county_obj,district=district_obj,active=status)
+            village_details.save()
+            x = {"result":1}
+            x=json.dumps(x)
+            return HttpResponse(x)
+
+        county_obj = CountyTb.objects.get(county_name=str(countyname))
+        district_obj = Disttab.objects.get(district_name=str(districtname))
+        subdistrict_obj = SubdistrictTab.objects.get(subdistrict=str(subdistrictname))
+        hospital_name= str(hospital_name).replace(" (PHC)","")
+        hospital_name=HealthCenters.objects.get(hospital_name=str(hospital_name))
+        village_details = UserMasters(user_role=str(userrole),user_id=str(userid),name=str(first_name),lastname=str(last_name),password=str(password),hospital=hospital_name,phone_number=str(mobile),email=str(email),country=country_obj,county=county_obj,district=district_obj,subdistrict=subdistrict_obj,active=status)
         village_details.save()
     x = {"result":1}
     x=json.dumps(x)
@@ -906,6 +1158,7 @@ def edit_usermaintenance(request,batch_id):
 
     global user_id
     user_id = batch_id
+    #print user_id
     details=UserMasters.objects.get(id=int(batch_id))
     user_role = []
     if str(details.user_role) == 'ANM':
@@ -919,31 +1172,11 @@ def edit_usermaintenance(request,batch_id):
     countrys=[]
 
     names= CountryTb.objects.filter(active=True).values_list('country_name')
-    countrys.insert(0,details.country)
+    e_country_name = CountryTb.objects.filter(id=int(details.country.id)).values_list("country_name")[0][0]
+    countrys.insert(0,e_country_name)
     for country_data in names:
         if country_data[0] not in countrys:
             countrys.append(str(country_data[0]))
-
-    countys = []
-    county_name = CountyTb.objects.filter(country_name__country_name=str(details.country),active=True).values_list('county_name')
-    countys.insert(0,details.county)
-    for name in county_name:
-        if name[0] not in countys:
-            countys.append(str(name[0]))
-
-    districts = []
-    district_name = Disttab.objects.filter(county_name=str(details.county),active=True).values_list('district_name')
-    districts.insert(0,details.district)
-    for name in district_name:
-        if name[0] not in districts:
-            districts.append(str(name[0]))
-
-    subdistricts = []
-    subdistrict_name = SubdistrictTab.objects.filter(district=str(details.district),active=True).values_list('subdistrict')
-    subdistricts.insert(0,details.subdistrict)
-    for name in subdistrict_name:
-        if name[0] not in subdistricts:
-            subdistricts.append(str(name[0]))
 
     status= details.active
     c_status="false"
@@ -951,11 +1184,40 @@ def edit_usermaintenance(request,batch_id):
         c_status = "true"
     c = {}
     c.update(csrf(request))
+    
     if str(details.user_role) == 'ANM':
-        subcenter_data = HealthCenters.objects.filter(subdistrict_name=str(details.subdistrict),hospital_type='Subcenter',active=True).values_list('hospital_name')
+        countys = []
+        county_name = CountyTb.objects.filter(country_name__country_name=int(details.country.id),active=True).values_list('county_name')
+        e_county_name = CountyTb.objects.filter(id=int(details.county.id)).values_list("county_name")[0][0]
+        countys.insert(0,e_county_name)
+        for name in county_name:
+            if name[0] not in countys:
+                countys.append(str(name[0]))
+
+        districts = []
+        district_name = Disttab.objects.filter(county_name=int(details.county.id),active=True).values_list('district_name')
+        e_district_name = Disttab.objects.filter(id=int(details.district.id)).values_list("district_name")[0][0]
+        districts.insert(0,e_district_name)
+        for name in district_name:
+            if name[0] not in districts:
+                districts.append(str(name[0]))
+
+        subdistricts = []
+        subdistrict_name = SubdistrictTab.objects.filter(district=int(details.district.id),active=True).values_list('subdistrict')
+        e_subdistrict_name = SubdistrictTab.objects.filter(id=int(details.subdistrict.id)).values_list("subdistrict")[0][0]
+        subdistricts.insert(0,e_subdistrict_name)
+        for name in subdistrict_name:
+            if name[0] not in subdistricts:
+                subdistricts.append(str(name[0]))
+        subcenter_data = HealthCenters.objects.filter(subdistrict_name=int(details.subdistrict.id),hospital_type='Subcenter',active=True).values_list('hospital_name')
+        print subcenter_data,'subcenterdata'
+        subcenterdata = HealthCenters.objects.filter(id=int(details.subcenter.id),hospital_type='Subcenter',active=True).values_list('hospital_name')[0][0]
+        # print subcenterdata
         village_data = HealthCenters.objects.filter(hospital_name=str(details.subcenter),hospital_type='Subcenter',active=True).values_list('villages')
+        print village_data,'village_data'
         subcenter_list= []
-        subcenter_list.insert(0,details.subcenter)
+        subcenter_list.insert(0,subcenterdata)
+        print subcenter_list
         for s in subcenter_data:
             if s[0] not in subcenter_list:
                 subcenter_list.append(s[0])
@@ -963,17 +1225,107 @@ def edit_usermaintenance(request,batch_id):
         if len(village_data) > 0:
             village_data = village_data[0][0].split(',')
         return render_to_response('edituserdetail.html',{'y':details,'user_role':user_role,'country':countrys,'county':countys,'district':districts,'subdistrict':subdistricts,'subcenter':subcenter_list,'villages':villages,'active':c_status,'csrf_token':c['csrf_token']})
+    
     elif str(details.user_role) == 'DOC':
-        phc_hospitals_name = HealthCenters.objects.filter(subdistrict_name=str(details.subdistrict),hospital_type='PHC',active=True).values_list('hospital_name')
-        subd_hospitals_name = HealthCenters.objects.filter(subdistrict_name=str(details.subdistrict),hospital_type='SubDistrict',active=True).values_list('hospital_name')
+        
+        if str(details.county)=='None':
+            
+            hospital_name = HealthCenters.objects.filter(hospital_type='Country',country_name=int(details.country.id),active=True).values_list('hospital_name')
+            hospital_list=[]
+            c_hospital_name = HealthCenters.objects.filter(id=int(details.hospital.id)).values_list('hospital_name')
+            hospital_list.insert(0,c_hospital_name[0][0])
+            for hosp in hospital_name:
+                if hosp[0] not in hospital_list:
+                    hospital_list.append(hosp[0])
+
+            return render_to_response('edituserdetail.html',{'y':details,'user_role':user_role,'country':countrys,'hospital':hospital_list,'active':c_status,'csrf_token':c['csrf_token']})
+
+        if str(details.district) == 'None':
+            countys = []
+            county_name = CountyTb.objects.filter(country_name__country_name=int(details.country.id),active=True).values_list('county_name')
+            e_county_name = CountyTb.objects.filter(id=int(details.county.id)).values_list("county_name")[0][0]
+            countys.insert(0,e_county_name)
+            for name in county_name:
+                if name[0] not in countys:
+                    countys.append(str(name[0]))
+            hospital_name = HealthCenters.objects.filter(hospital_type='County',country_name=int(details.county.id),active=True).values_list('hospital_name')
+            hospital_list=[]
+            c_hospital_name = HealthCenters.objects.filter(id=int(details.hospital.id)).values_list('hospital_name')
+            hospital_list.insert(0,c_hospital_name[0][0])
+            for hosp in hospital_name:
+                if hosp[0] not in hospital_list:
+                    hospital_list.append(hosp[0])
+
+            
+            return render_to_response('edituserdetail.html',{'y':details,'user_role':user_role,'country':countrys,'county':countys,'hospital':hospital_list,'active':c_status,'csrf_token':c['csrf_token']})
+
+        if str(details.subdistrict)=='None':
+            countys = []
+            county_name = CountyTb.objects.filter(country_name__country_name=int(details.country.id),active=True).values_list('county_name')
+            e_county_name = CountyTb.objects.filter(id=int(details.county.id)).values_list("county_name")[0][0]
+            countys.insert(0,e_county_name)
+            for name in county_name:
+                if name[0] not in countys:
+                    countys.append(str(name[0]))
+
+            districts = []
+            district_name = Disttab.objects.filter(county_name=int(details.county.id),active=True).values_list('district_name')
+            e_district_name = Disttab.objects.filter(id=int(details.district.id)).values_list("district_name")[0][0]
+            districts.insert(0,e_district_name)
+            for name in district_name:
+                if name[0] not in districts:
+                    districts.append(str(name[0]))
+            hospital_name = HealthCenters.objects.filter(hospital_type='County',country_name=int(details.county.id),active=True).values_list('hospital_name')
+            hospital_list=[]
+            c_hospital_name = HealthCenters.objects.filter(id=int(details.hospital.id)).values_list('hospital_name')
+            hospital_list.insert(0,c_hospital_name[0][0])
+            for hosp in hospital_name:
+                if hosp[0] not in hospital_list:
+                    hospital_list.append(hosp[0])
+            return render_to_response('edituserdetail.html',{'y':details,'user_role':user_role,'country':countrys,'county':countys,'district':districts,'hospital':hospital_list,'active':c_status,'csrf_token':c['csrf_token']})
+        countys = []
+        county_name = CountyTb.objects.filter(country_name__country_name=int(details.country.id),active=True).values_list('county_name')
+        e_county_name = CountyTb.objects.filter(id=int(details.county.id)).values_list("county_name")[0][0]
+        countys.insert(0,e_county_name)
+        for name in county_name:
+            if name[0] not in countys:
+                countys.append(str(name[0]))
+
+        districts = []
+        district_name = Disttab.objects.filter(county_name=int(details.county.id),active=True).values_list('district_name')
+        e_district_name = Disttab.objects.filter(id=int(details.district.id)).values_list("district_name")[0][0]
+        districts.insert(0,e_district_name)
+        for name in district_name:
+            if name[0] not in districts:
+                districts.append(str(name[0]))
+
+        subdistricts = []
+        subdistrict_name = SubdistrictTab.objects.filter(district=int(details.district.id),active=True).values_list('subdistrict')
+        e_subdistrict_name = SubdistrictTab.objects.filter(id=int(details.subdistrict.id)).values_list("subdistrict")[0][0]
+        subdistricts.insert(0,e_subdistrict_name)
+        for name in subdistrict_name:
+            if name[0] not in subdistricts:
+                subdistricts.append(str(name[0]))
+        phc_hospitals_name = HealthCenters.objects.filter(subdistrict_name=int(details.subdistrict.id),hospital_type='PHC',active=True).values_list('hospital_name')
+        #print phc_hospitals_name,'phcs'
+        subd_hospitals_name = HealthCenters.objects.filter(subdistrict_name=int(details.subdistrict.id),hospital_type='SubDistrict',active=True).values_list('hospital_name')
         hospital_list=[]
-        hospital_list.insert(0,details.hospital)
+        c_hospital_name = HealthCenters.objects.filter(id=int(details.hospital.id)).values_list('hospital_name')
+        hospital_list.insert(0,c_hospital_name[0][0])
+        #print hospital_list
+        #print subd_hospitals_name
         for subd in subd_hospitals_name:
             if subd[0] not in hospital_list:
                 hospital_list.append(subd[0])
+        #print hospital_list
         for phc in phc_hospitals_name:
-            if str(phc[0]+' (PHC)') in hospital_list:
-                hospital_list.append(str(phc[0]+' (PHC)'))
+            #print str(phc[0]+'(PHC)')
+            if str(phc[0]) in hospital_list:
+
+                hospital_list.append(str(phc[0]))
+                print hospital_list
+        #print hospital_list
+
         return render_to_response('edituserdetail.html',{'y':details,'user_role':user_role,'country':countrys,'county':countys,'district':districts,'subdistrict':subdistricts,'hospital':hospital_list,'active':c_status,'csrf_token':c['csrf_token']})
 
 def user_validate(request):
@@ -1033,7 +1385,7 @@ def update_usermaintenance(request):
         countyname=request.GET.get('county_name','')
         districtname=request.GET.get('district_name','')
         subdistrictname=request.GET.get('subdistrict_name','')
-        subcentername=request.GET.get('subcenter_name')
+        subcentername=request.GET.get('subcenter_name','')
         village = request.GET.get('village','')
         hospital_name = request.GET.get('hospitals','')
         active = str(request.GET.get('active',''))
@@ -1052,15 +1404,55 @@ def update_usermaintenance(request):
         countyname=request.POST.get('county_name','')
         districtname=request.POST.get('district_name','')
         subdistrictname=request.POST.get('subdistrict_name','')
-        subcentername=request.POST.get('subcenter_name')
+        subcentername=request.POST.get('subcenter_name','')
         hospital_name = request.POST.get('hospitals','')
         active = str(request.POST.get('active',''))
-
+    print subdistrictname,'subdist'
     status=0
     if str(active) =='true':
         status=1
+    country_obj = CountryTb.objects.get(country_name=str(countryname))
+    if str(userrole) == 'ANM':
+        county_obj = CountyTb.objects.get(county_name=str(countyname))
+        district_obj = Disttab.objects.get(district_name=str(districtname))
+        subdistrict_obj = SubdistrictTab.objects.get(subdistrict=str(subdistrictname))
+        subcenter = HealthCenters.objects.get(hospital_name=str(subcentername))
+        print subcenter,'subcen'
+        edit_details = UserMasters.objects.filter(id=user_id).update(user_role=str(userrole),user_id=str(userid),name=str(first_name),lastname=str(last_name),password=str(password),subcenter=subcenter,phone_number=str(mobile),email=str(email),country=country_obj,county=county_obj,district=district_obj,subdistrict=subdistrict_obj,villages=str(village),active=status)
 
-    edit_details = UserMasters.objects.filter(id=user_id).update(user_role=str(userrole),user_id=str(userid),name=str(first_name),lastname=str(last_name),password=str(password),hospital=str(hospital_name),phone_number=str(mobile),email=str(email),country=str(countryname),county=str(countyname),district=str(districtname),subdistrict=str(subdistrictname),villages=str(village),active=status)
+
+    elif str(userrole) == 'DOC':
+        if len(countyname)==0:
+
+            hospital_name=HealthCenters.objects.get(hospital_name=str(hospital_name))
+            edit_details = UserMasters.objects.filter(id=user_id).update(user_role=str(userrole),user_id=str(userid),name=str(first_name),lastname=str(last_name),password=str(password),hospital=hospital_name,phone_number=str(mobile),email=str(email),country=country_obj,active=status)
+
+            x = {"result":1}
+            x=json.dumps(x)
+            return HttpResponse(x)
+        if len(districtname)==0:
+            county_obj = CountyTb.objects.get(county_name=str(countyname))
+            hospital_name=HealthCenters.objects.get(hospital_name=str(hospital_name))
+            edit_details = UserMasters.objects.filter(id=user_id).update(user_role=str(userrole),user_id=str(userid),name=str(first_name),lastname=str(last_name),password=str(password),hospital=hospital_name,phone_number=str(mobile),email=str(email),country=country_obj,county=county_obj,active=status)
+
+            x = {"result":1}
+            x=json.dumps(x)
+            return HttpResponse(x)
+        if len(subdistrictname)==0:
+            county_obj = CountyTb.objects.get(county_name=str(countyname))
+            district_obj = Disttab.objects.get(district_name=str(districtname))
+            hospital_name=HealthCenters.objects.get(hospital_name=str(hospital_name))
+            edit_details = UserMasters.objects.filter(id=user_id).update(user_role=str(userrole),user_id=str(userid),name=str(first_name),lastname=str(last_name),password=str(password),hospital=hospital_name,phone_number=str(mobile),email=str(email),country=country_obj,county=county_obj,district=district_obj,active=status)
+
+            x = {"result":1}
+            x=json.dumps(x)
+
+        county_obj = CountyTb.objects.get(county_name=str(countyname))
+        district_obj = Disttab.objects.get(district_name=str(districtname))
+        subdistrict_obj = SubdistrictTab.objects.get(subdistrict=str(subdistrictname))
+        hospital_name=HealthCenters.objects.get(hospital_name=str(hospital_name))
+        
+        edit_details = UserMasters.objects.filter(id=user_id).update(user_role=str(userrole),user_id=str(userid),name=str(first_name),lastname=str(last_name),password=str(password),hospital=hospital_name,phone_number=str(mobile),email=str(email),country=country_obj,county=county_obj,district=district_obj,subdistrict=subdistrict_obj,villages=str(village),active=status)
     x = {"result":1}
     x=json.dumps(x)
     return HttpResponse(x)
@@ -1074,7 +1466,7 @@ def county(request):
 
     country_obj = CountryTb.objects.get(country_name=str(country_name))
     county_data = CountyTb.objects.filter(country_name=country_obj,active=True).values_list('county_name')
-    hospitals_name = HealthCenters.objects.filter(country_name=str(country_name),hospital_type='Country',active=True).values_list('hospital_name')
+    hospitals_name = HealthCenters.objects.filter(country_name=country_obj,hospital_type='Country',active=True).values_list('hospital_name')
     hos_names =[]
     if len(hospitals_name)>0:
         for h in hospitals_name:
@@ -1106,7 +1498,10 @@ def save_district(request):
     status = 0
     if str(active) == 'true':
         status = 1
-    ins_district= Disttab(country_name=str(country_name),county_name=str(county_name),district_name=str(district_name),active=status)
+    country_obj = CountryTb.objects.get(country_name=str(country_name))
+    county_obj = CountyTb.objects.get(county_name=str(county_name))
+    #print country_name,county_obj,district_name,is_active
+    ins_district= Disttab(country_name=country_obj,county_name=county_obj,district_name=str(district_name),active=status)
     ins_district.save()
     x = {"result":"true"}
     x=json.dumps(x)
@@ -1123,7 +1518,8 @@ def edit_district(request,district_id):
 
     country = []
     country_name = CountryTb.objects.filter(active=True).values_list('country_name')
-    country.insert(0,edit_details.country_name)
+    e_country_name = CountryTb.objects.filter(id=int(edit_details.country_name.id)).values_list("country_name")[0][0]
+    country.insert(0,e_country_name)
     for name in country_name:
         if name[0] not in country:
             country.append(str(name[0]))
@@ -1131,7 +1527,8 @@ def edit_district(request,district_id):
     county = []
     country_obj = CountryTb.objects.get(country_name=str(edit_details.country_name))
     county_name = CountyTb.objects.filter(country_name=country_obj,active=True).values_list('county_name')
-    county.insert(0,edit_details.county_name)
+    e_county_name = CountyTb.objects.filter(id=int(edit_details.county_name.id)).values_list("county_name")[0][0]
+    county.insert(0,e_county_name)
     for name in county_name:
         if name[0] not in county:
             county.append(str(name[0]))
@@ -1154,7 +1551,10 @@ def update_district(request):
     status=0
     if str(active) == 'true':
         status = 1
-    update_details = Disttab.objects.filter(id=hos_id).update(country_name=str(country),county_name=str(county),district_name=str(district),active=status)
+    country_obj = CountryTb.objects.get(country_name=str(country))
+    county_obj = CountyTb.objects.get(county_name=str(county))
+    #print country_obj,county_obj
+    update_details = Disttab.objects.filter(id=hos_id).update(country_name=country_obj,county_name=county_obj,district_name=str(district),active=status)
     x = {"result":1}
     x=json.dumps(x)
     return HttpResponse(x)
@@ -1177,10 +1577,11 @@ def district(request):
 
     elif request.method == "POST":
         county_name= request.POST.get('county_name',"")
-
-    district_data = Disttab.objects.filter(county_name=str(county_name),active=True).values_list('district_name')
-
-    hospitals_name = HealthCenters.objects.filter(county_name=str(county_name),hospital_type='County',active=True).values_list('hospital_name')
+    county_obj=CountyTb.objects.filter(county_name=str(county_name)).values_list("id")[0][0]
+    #print county_obj
+    district_data = Disttab.objects.filter(county_name=county_obj,active=True).values_list('district_name')
+    #print district_data
+    hospitals_name = HealthCenters.objects.filter(county_name=county_obj,hospital_type='County',active=True).values_list('hospital_name')
     hos_names =[]
     if len(hospitals_name)>0:
         for h in hospitals_name:
@@ -1220,21 +1621,27 @@ def save_subdist(request):
     status=0
     if str(active) =='true':
         status=1
-
-    ins_subdistrict= SubdistrictTab(country=str(country_name),county=str(county_name),district=str(district_name),subdistrict=str(subdistrict_name),active=status)
+    country_obj=CountryTb.objects.get(country_name=str(country_name))
+    county_obj = CountyTb.objects.get(county_name=str(county_name))
+    district_obj = Disttab.objects.get(district_name=str(district_name))
+    ins_subdistrict= SubdistrictTab(country=country_obj,county=county_obj,district=district_obj,subdistrict=str(subdistrict_name),active=status)
     ins_subdistrict.save()
     x = {"result":'/admin/'}
     x=json.dumps(x)
     return HttpResponse(x)
 
 def subdistrict(request):
+    
     if request.method == "GET":
         district_name= request.GET.get('district_name',"")
 
     elif request.method == "POST":
         district_name= request.POST.get('district_name',"")
-    subdistrict_data = SubdistrictTab.objects.filter(district=str(district_name),active=True).values_list('subdistrict')
-    hospitals_name = HealthCenters.objects.filter(district_name=str(district_name),hospital_type='District',active=True).values_list('hospital_name')
+    district_obj=Disttab.objects.filter(district_name=str(district_name)).values_list("id")[0][0]
+    #print district_obj,'dist'
+    subdistrict_data = SubdistrictTab.objects.filter(district=district_obj,active=True).values_list('subdistrict')
+    #print subdistrict_data,'subdist'
+    hospitals_name = HealthCenters.objects.filter(district_name=district_obj,hospital_type='District',active=True).values_list('hospital_name')
     hos_names =[]
     if len(hospitals_name)>0:
         for h in hospitals_name:
@@ -1242,6 +1649,7 @@ def subdistrict(request):
     res = []
     for s in subdistrict_data:
         res.append(str(s[0]))
+    #print res,'res'
     result = {'res':res,'hospitals':hos_names}
     res = json.dumps(result)
     return HttpResponse(res)
@@ -1256,10 +1664,10 @@ def subdistrict_validate(request):
         login = "false"
     return HttpResponse(login)
 
-
 def edit_subdistrict(request,subdistrict_id):
     global hos_id
     hos_id = subdistrict_id
+    #print hos_id,subdistrict_id
     if request.method == 'GET':
         edit_details = SubdistrictTab.objects.get(id=int(subdistrict_id))
     elif request.method == 'POST':
@@ -1267,21 +1675,24 @@ def edit_subdistrict(request,subdistrict_id):
 
     country = []
     country_name = CountryTb.objects.filter(active=True).values_list('country_name')
-    country.insert(0,edit_details.country)
+    e_country_name = CountryTb.objects.filter(id=int(edit_details.country.id)).values_list("country_name")[0][0]
+    country.insert(0,e_country_name)
     for name in country_name:
         if name[0] not in country:
             country.append(str(name[0]))
 
     county = []
     county_name = CountyTb.objects.filter(active=True).values_list('county_name')
-    county.insert(0,edit_details.county)
+    e_county_name = CountyTb.objects.filter(id=int(edit_details.county.id)).values_list("county_name")[0][0]
+    county.insert(0,e_county_name)
     for name in county_name:
         if name[0] not in county:
             county.append(str(name[0]))
 
     district = []
     district_name = Disttab.objects.filter(active=True).values_list('district_name')
-    district.insert(0,edit_details.district)
+    e_district_name = Disttab.objects.filter(id = int(edit_details.district.id)).values_list("district_name")[0][0]
+    district.insert(0,e_district_name)
     for name in district_name:
         if name[0] not in district:
             district.append(str(name[0]))
@@ -1295,16 +1706,22 @@ def edit_subdistrict(request,subdistrict_id):
 
 def update_subdistrict(request):
     global hos_id
+    #print hos_id
     if request.method == 'GET':
         country = str(request.GET.get('country',''))
         county = str(request.GET.get('county',''))
         district = str(request.GET.get('district',''))
         subdistrict = str(request.GET.get('subdistrict',''))
+        #print subdistrict
         active = str(request.GET.get('active',''))
     status=0
     if str(active) =='true':
         status=1
-    update_details = SubdistrictTab.objects.filter(id=hos_id).update(country=country,county=county,district=str(district),subdistrict=str(subdistrict),active=status)
+    country_obj = CountryTb.objects.get(country_name=country)
+    county_obj = CountyTb.objects.get(county_name=county)
+    district_obj = Disttab.objects.get(district_name =district)
+    #print country_obj,county_obj,district_obj
+    update_details = SubdistrictTab.objects.filter(id=hos_id).update(country=country_obj,county=county_obj,district=district_obj,subdistrict=subdistrict,active=status)
 
     x = {"result":1}
     x=json.dumps(x)
@@ -1331,7 +1748,14 @@ def save_location(request):
     status=0
     if str(active) =='true':
         status=1
-    ins_location= LocationTab(country=str(country_name),county=str(county_name),district=str(district_name),subdistrict=str(subdistrict_name),location=str(location_name),active=status)
+    #print subdistrict_name,'subduis',district_name
+    country_obj=CountryTb.objects.get(country_name=str(country_name))
+    county_obj = CountyTb.objects.get(county_name=str(county_name))
+    district_obj = Disttab.objects.get(district_name=str(district_name))
+    subdistrict_obj = SubdistrictTab.objects.get(subdistrict=str(subdistrict_name))
+    # subdist=subdistrict_obj.subdistrict
+    #print subdistrict_obj,district_obj
+    ins_location= LocationTab(country=country_obj,county=county_obj,district=district_obj,subdistrict=subdistrict_obj,location=str(location_name),active=status)
     ins_location.save()
     x = {"result":'/admin/'}
     x=json.dumps(x)
@@ -1347,26 +1771,30 @@ def edit_location(request,loc_id):
 
     country = []
     country_name = CountryTb.objects.filter(active=True).values_list('country_name')
-    country.insert(0,edit_details.country)
+    e_country_name = CountryTb.objects.filter(id=int(edit_details.country.id)).values_list("country_name")[0][0]
+    country.insert(0,e_country_name)
     for name in country_name:
         if name[0] not in country:
             country.append(str(name[0]))
     county = []
     county_name = CountyTb.objects.filter(active=True).values_list('county_name')
-    county.insert(0,edit_details.county)
+    e_county_name = CountyTb.objects.filter(id=int(edit_details.county.id)).values_list("county_name")[0][0]
+    county.insert(0,e_county_name)
     for name in county_name:
         if name[0] not in county:
             county.append(str(name[0]))
 
     district = []
     district_name = Disttab.objects.filter(active=True).values_list('district_name')
-    district.insert(0,edit_details.district)
+    e_district_name = Disttab.objects.filter(id=int(edit_details.district.id)).values_list("district_name")[0][0]
+    district.insert(0,e_district_name)
     for name in district_name:
         if name[0] not in district:
             district.append(str(name[0]))
     subdistrict = []
     subdistrict_name = SubdistrictTab.objects.filter(active=True).values_list('subdistrict')
-    subdistrict.insert(0,edit_details.subdistrict)
+    e_subdistrict_name = SubdistrictTab.objects.filter(id=int(edit_details.subdistrict.id)).values_list("subdistrict")[0][0]
+    subdistrict.insert(0,e_subdistrict_name)
     for name in subdistrict_name:
         if name[0] not in subdistrict:
             subdistrict.append(str(name[0]))
@@ -1390,7 +1818,20 @@ def update_location(request):
     status=0
     if str(active) =='true':
         status=1
-    update_details = LocationTab.objects.filter(id=hos_id).update(country=country,county=county,district=str(district),subdistrict=str(subdistrict),location=str(location),active=status)
+    previous_location = str(LocationTab.objects.filter(id=hos_id).values_list("location")[0][0])
+    country_obj = CountryTb.objects.get(country_name=country)
+    county_obj = CountyTb.objects.get(county_name =county)
+    district_obj = Disttab.objects.get(district_name =district)
+    subdistrict_obj = SubdistrictTab.objects.get(subdistrict=subdistrict)
+    #print previous_location,location
+    #pront
+    update_details = LocationTab.objects.filter(id=hos_id).update(country=country_obj,county=county_obj,district=district_obj,subdistrict=subdistrict_obj,location=str(location),active=status)
+    cur = connection.cursor()
+    health_centers_query = "update health_centers set villages=REPLACE(villages,'%s','%s')" %(previous_location,location)
+    cur.execute(str(health_centers_query))
+    user_masters_query = "update user_masters_test set villages=REPLACE(villages,'%s','%s')" %(previous_location,location)
+    cur.execute(str(user_masters_query))
+    print health_centers_query,user_masters_query
     x = {"result":1}
     x=json.dumps(x)
     return HttpResponse(x)
@@ -1401,10 +1842,12 @@ def location(request):
 
     elif request.method == "POST":
         subdistrict_name= request.POST.get('subdistrict_name',"")
-    subdistrict_data = HealthCenters.objects.filter(subdistrict_name=str(subdistrict_name),hospital_type='SubDistrict',active=True).values_list('hospital_name')
-    location_data = LocationTab.objects.filter(subdistrict=str(subdistrict_name),active=True).values_list('location')
-    hospitals_name = HealthCenters.objects.filter(subdistrict_name=str(subdistrict_name),hospital_type='PHC',active=True).values_list('hospital_name')
-    subcenter_data = HealthCenters.objects.filter(subdistrict_name=str(subdistrict_name),hospital_type='Subcenter',active=True).values_list('hospital_name')
+    #print subdistrict_name
+    subdistrict_obj=SubdistrictTab.objects.filter(subdistrict=str(subdistrict_name))
+    subdistrict_data = HealthCenters.objects.filter(subdistrict_name=subdistrict_obj,hospital_type='SubDistrict',active=True).values_list('hospital_name')
+    location_data = LocationTab.objects.filter(subdistrict=subdistrict_obj,active=True).values_list('location')
+    hospitals_name = HealthCenters.objects.filter(subdistrict_name=subdistrict_obj,hospital_type='PHC',active=True).values_list('hospital_name')
+    subcenter_data = HealthCenters.objects.filter(subdistrict_name=subdistrict_obj,hospital_type='Subcenter',active=True).values_list('hospital_name')
     hos_names =[]
     if len(hospitals_name)>0:
         for h in hospitals_name:
@@ -1449,29 +1892,192 @@ def subcenter(request):
     res = json.dumps(result)
     return HttpResponse(res)
 
-#Still pending
 def doctor_overview(request):
     if request.method == "GET":
         o_visitid = request.GET.get("visitid","")
         o_entityid = str(request.GET.get("entityid",""))
-    overview_data = []
-    overview_events = {}
-    overview_visit_curl = ancvisit_detail="curl -s -H -X GET http://10.10.10.108:5984/drishti-form/_design/FormSubmission/_view/by_EntityId?key=%22"+str(o_visitid)+"%22&descending=true"
-    overview_visit_output = commands.getoutput(overview_visit_curl)
-    overview_visit_details = json.loads(overview_visit_output)
-    overview_visit_data = overview_visit_details["rows"]
+        visit_type = request.GET.get("type","")
+    end_res = '{}'
+    display_result=[]
+    # visit_data=[]
+    # visit={}
+    # newvisitdata=defaultdict(list)
+    # newvisit={}
+    if visit_type.upper() == "EC":
+        entity_detail="curl -s -H -X GET http://202.153.34.169:5984/drishti-form/_design/FormSubmission/_view/by_EntityId?key=%22"+o_entityid+"%22&descending=true"
+        poc_output=commands.getoutput(entity_detail)
+        poutput=json.loads(poc_output)
+        entity_row_data = poutput['rows']
+        result=defaultdict(list)
+        for i in range(len(entity_row_data)):
+            for data in row1[i]["value"][1]['form']['fields']:
+                if row1[i]['value'][0] == "ec_registration" or row1[i]['value'][0] == "ec_edit":
+                    key=data.get('name')
+                    value=data.get('value')
+                    if key=='wifeName':
+                        temp={}
+                        temp={key:value}
+                        result.update(temp)
+                    elif key=='wifeAge':
+                        temp={}
+                        temp={key:value}
 
-    for event in overview_visit_data:
-        overview_events = {}
-        overview_events["eventName"]=str(event["value"][0])
-        visit_data = {}
-        for visit in event["value"][1]["form"]["fields"]:
-            key = visit.get('name')
-            if 'value' in visit.keys():
-                value = visit.get('value')
-            else:
-                value=''
-            visit_data[str(key)]=str(value)
-        overview_events["eventInfo"]=visit_data
-        overview_data.append(overview_events)
-    return HttpResponse(overview_data)
+                        result.update(temp)
+                    elif key=='phoneNumber':
+                        temp={}
+                        print key,value
+                        temp={"phoneNumber":value}
+                        result.update(temp)
+                    elif key=='district':
+                        temp={}
+                        temp={key:value}
+                        result.update(temp)
+                    elif key=='husbandName':
+                        temp={}
+                        temp={key:value}
+                        result.update(temp)
+                    elif key=='village':
+                        temp={}
+                        temp={key:value}
+                        result.update(temp)
+                    elif key == 'aadharNumber':
+                        temp={}
+                        temp={key:value}
+                        result.update(temp)
+            temp_list=[]
+            #temp_list.append(visit_data[-1])
+            #result["riskinfo"]=temp_list
+            #result["entityidec"] = entity_detail_id
+            result["anmId"] = row1[0]['value'][2]
+            #result["pending"] = str(entity[2])
+            display_result.append(result)
+            end_res= json.dumps(display_result)
+            return HttpResponse(end_res)
+
+    if visit_type.upper() == "ANC":
+        ancvisit_detail="curl -s -H -X GET http://202.153.34.169:5984/drishti-form/_design/FormSubmission/_view/by_EntityId?key=%22"+str(o_visitid)+"%22&descending=true"
+        visit_output = commands.getoutput(ancvisit_detail)
+        visit_data1 = json.loads(visit_output)
+        visit_row_data = visit_data1['rows']
+        for i in range(len(visit_row_data)):
+            if visit_row_data[i]['value'][0] == 'anc_visit' or visit_row_data[i]['value'][0] == 'anc_visit_edit':
+                visit_data=[]
+                poc_len=1
+                doc_con='no'
+                visit={}
+
+                newvisitdata=defaultdict(list)
+                newvisit={}
+
+            #doc_id=visit_row_data[i]['id']
+                for visitdata in visit_row_data[i]['value'][1]['form']['fields']:
+                    key = visitdata.get('name')
+                    if 'value' in visitdata.keys():
+                        value = visitdata.get('value')
+                    else:
+                        value=''
+                    if key == 'ancVisitNumber':
+                        visit['ancVisitNumber']=value
+                    elif key == 'ancNumber':
+                        visit['ancNumber']=value
+                    elif key == 'ancVisitPerson':
+                        visit['ancVisitPerson']=value
+                    elif key=='ancVisitDate':
+                        visit['ancVisitDate']=value
+                    elif key == 'riskObservedDuringANC':
+                        visit['riskObservedDuringANC']=value
+                    elif key == 'bpSystolic':
+                        visit['bpSystolic']=value
+                    elif key == 'bpDiastolic':
+                        visit['bpDiastolic']=value
+                    elif key == 'temperature':
+                        visit['temperature']=value
+                    elif key == 'pulseRate':
+                        visit['pulseRate']=value
+                    elif key == 'bloodGlucoseData':
+                        visit['bloodGlucoseData']=value
+                    elif key == 'weight':
+                        visit['weight']=value
+                    elif key == 'anmPoc':
+                        visit['anmPoc']=value
+                    elif key == 'isHighRisk':
+                        visit['isHighRisk']=value
+                    elif key == 'fetalData':
+                        visit['fetalData']=value
+                        visit['visit_type'] = 'ANC'
+                    #visit["entityid"] = entity[0]
+                    #visit['id']=doc_id
+                visit_data.append(visit)
+
+        entity_detail="curl -s -H -X GET http://202.153.34.169:5984/drishti-form/_design/FormSubmission/_view/by_EntityId?key=%22"+o_entityid+"%22&descending=true"
+        poc_output=commands.getoutput(entity_detail)
+        poutput=json.loads(poc_output)
+        entity_row_data = poutput['rows']
+        print len(entity_row_data)
+
+        if len(visit_data)>0:
+            result=defaultdict(list)
+            if len(entity_row_data)>0:
+                for i in range(len(entity_row_data)):
+                    for data in entity_row_data[i]["value"][1]['form']['fields']:
+                        if entity_row_data[i]['value'][0] == "anc_registration_oa" or entity_row_data[i]['value'][0]=="anc_registration":
+                            key=data.get('name')
+                            value=data.get('value')
+                            if key=='edd':
+                                temp={}
+                                temp={key:value}
+                                edd_datetime = str(value).split(',')
+                                edd_date = edd_datetime[-1].split(' ')
+                                edd = '-'.join(edd_date[1:4])
+                                dat = datetime.strptime(edd,'%d-%b-%Y')
+                                lmp_date = dat+timedelta(days=-280)
+                                lmp = datetime.strftime(lmp_date ,'%d-%b-%Y')
+                                visit['edd']=edd
+                                visit['lmp']=lmp
+                                visit_data.append(visit)
+                            # elif key=='phoneNumber':
+                            #     temp={}
+                            #     print key,value
+                            #     temp={"phoneNumber":value}
+                            #     #result.update(temp)
+                        key=data.get('name')
+                        value=data.get('value')
+                        if key=='wifeName':
+                            temp={}
+                            temp={key:value}
+                            result.update(temp)
+                        elif key=='wifeAge':
+                            temp={}
+                            temp={key:value}
+
+                            result.update(temp)
+                        elif key=='phoneNumber':
+                            temp={}
+                            print key,value
+                            temp={"phoneNumber":value}
+                            result.update(temp)
+                        elif key=='district':
+                            temp={}
+                            temp={key:value}
+                            result.update(temp)
+                        elif key=='husbandName':
+                            temp={}
+                            temp={key:value}
+                            result.update(temp)
+                        elif key=='village':
+                            temp={}
+                            temp={key:value}
+                            result.update(temp)
+                        elif key == 'aadharNumber':
+                            temp={}
+                            temp={key:value}
+                            result.update(temp)
+                    temp_list=[]
+                    temp_list.append(visit_data)
+                    result["riskinfo"]=temp_list
+                    #result["entityidec"] = entity_detail_id
+                    #result["anmId"] = row1[0]['value'][2]
+                    #result["pending"] = str(entity[2])
+                    display_result.append(result)
+    end_res= json.dumps(display_result)
+    return HttpResponse(end_res)

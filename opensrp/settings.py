@@ -37,7 +37,6 @@ INSTALLED_APPS = (
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'Masters',
-    'smart_selects',
     'multiselectfield',
 )
 
@@ -62,10 +61,10 @@ WSGI_APPLICATION = 'opensrp.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql_psycopg2',
-        'NAME': 'drishti',
+        'NAME': 'opensrp',
         'USER': 'dhanush',
         'PASSWORD': 'dhanush',
-        'HOST': 'localhost',
+        'HOST': '10.10.11.79',
         'PORT': '5432',
         'OPTIONS': {
            'options': '-c search_path=report'

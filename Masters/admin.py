@@ -7,89 +7,89 @@ from django.shortcuts import render_to_response, redirect, get_object_or_404
 from django.shortcuts import render
 from collections import defaultdict
 
-class DimAnmAdmin(admin.ModelAdmin):
-    list_display = ('anmidentifier','phc','subcenter','name',)
-    search_fields = ('anmidentifier','phc__name',)
+# class DimAnmAdmin(admin.ModelAdmin):
+#     list_display = ('anmidentifier','phc','subcenter','name',)
+#     search_fields = ('anmidentifier','phc__name',)
 
-    def get_actions(self, request):
-        actions = super(DimAnmAdmin, self).get_actions(request)
-        del actions['delete_selected']
-        return actions
+#     def get_actions(self, request):
+#         actions = super(DimAnmAdmin, self).get_actions(request)
+#         del actions['delete_selected']
+#         return actions
 
-    def has_delete_permission(self, request, obj=None):
-        return False
+#     def has_delete_permission(self, request, obj=None):
+#         return False
 
-class DimIndicatorAdmin(admin.ModelAdmin):
-    list_display = ('indicator',)
-    search_fields = ('indicator',)
+# class DimIndicatorAdmin(admin.ModelAdmin):
+#     list_display = ('indicator',)
+#     search_fields = ('indicator',)
 
-    def get_actions(self, request):
-        actions = super(DimIndicatorAdmin   , self).get_actions(request)
-        del actions['delete_selected']
-        return actions
+#     def get_actions(self, request):
+#         actions = super(DimIndicatorAdmin   , self).get_actions(request)
+#         del actions['delete_selected']
+#         return actions
 
-    def has_delete_permission(self, request, obj=None):
-        return False
+#     def has_delete_permission(self, request, obj=None):
+#         return False
 
-class DimPhcAdmin(admin.ModelAdmin):
-    list_display = ('phcidentifier','name',)
-    search_fields = ('phcidentifier','name',)
+# class DimPhcAdmin(admin.ModelAdmin):
+#     list_display = ('phcidentifier','name',)
+#     search_fields = ('phcidentifier','name',)
 
-    def get_actions(self, request):
-        actions = super(DimPhcAdmin, self).get_actions(request)
-        del actions['delete_selected']
-        return actions
+#     def get_actions(self, request):
+#         actions = super(DimPhcAdmin, self).get_actions(request)
+#         del actions['delete_selected']
+#         return actions
 
-    def has_delete_permission(self, request, obj=None):
-        return False
+#     def has_delete_permission(self, request, obj=None):
+#         return False
 
-class DimServiceProviderAdmin(admin.ModelAdmin):
-    list_display = ('service_provider','type',)
-    search_fields = ('service_provider','type__type',)
+# class DimServiceProviderAdmin(admin.ModelAdmin):
+#     list_display = ('service_provider','type',)
+#     search_fields = ('service_provider','type__type',)
 
-    def get_actions(self, request):
-        actions = super(DimServiceProviderAdmin, self).get_actions(request)
-        del actions['delete_selected']
-        return actions
+#     def get_actions(self, request):
+#         actions = super(DimServiceProviderAdmin, self).get_actions(request)
+#         del actions['delete_selected']
+#         return actions
 
-    def has_delete_permission(self, request, obj=None):
-        return False
+#     def has_delete_permission(self, request, obj=None):
+#         return False
 
-    def has_add_permission(self, request):
-        return False 
+#     def has_add_permission(self, request):
+#         return False 
 
 
-class DimServiceProviderTypeAdmin(admin.ModelAdmin):
-    list_display = ('type',)
-    search_fields = ('type',)
+# class DimServiceProviderTypeAdmin(admin.ModelAdmin):
+#     list_display = ('type',)
+#     search_fields = ('type',)
 
-    def get_actions(self, request):
-        actions = super(DimServiceProviderTypeAdmin, self).get_actions(request)
-        del actions['delete_selected']
-        return actions
+#     def get_actions(self, request):
+#         actions = super(DimServiceProviderTypeAdmin, self).get_actions(request)
+#         del actions['delete_selected']
+#         return actions
 
-    def has_add_permission(self, request):
-        return False
+#     def has_add_permission(self, request):
+#         return False
 
-    def has_delete_permission(self, request, obj=None):
-        return False
+#     def has_delete_permission(self, request, obj=None):
+#         return False
 
-    def changelist_view(self, request, extra_context=None):
-        self.list_display_links = (None, )
-        return super(DimServiceProviderTypeAdmin, self).changelist_view(request, extra_context=None)
+#     def changelist_view(self, request, extra_context=None):
+#         self.list_display_links = (None, )
+#         return super(DimServiceProviderTypeAdmin, self).changelist_view(request, extra_context=None)
 
-class DimUserLoginAdmin(admin.ModelAdmin):
-    form = UserInfoForm
-    list_display = ('name','user_role',)
-    search_fields = ('name','user_role__type',)
+# class DimUserLoginAdmin(admin.ModelAdmin):
+#     form = UserInfoForm
+#     list_display = ('name','user_role',)
+#     search_fields = ('name','user_role__type',)
 
-    def get_actions(self, request):
-        actions = super(DimUserLoginAdmin, self).get_actions(request)
-        del actions['delete_selected']
-        return actions
+#     def get_actions(self, request):
+#         actions = super(DimUserLoginAdmin, self).get_actions(request)
+#         del actions['delete_selected']
+#         return actions
 
-    def has_delete_permission(self, request, obj=None):
-        return False
+#     def has_delete_permission(self, request, obj=None):
+#         return False
 
 class DrugInfoAdmin(admin.ModelAdmin):
     list_display= ('drug_name','frequency','dosage','direction','active',)
@@ -165,29 +165,29 @@ class InvestigationAdmin(admin.ModelAdmin):
     def has_delete_permission(self, request, obj=None):
         return False
 
-class PocInfoAdmin(admin.ModelAdmin):    
-    list_display = ('visitentityid','entityidec','anmid','level','clientversion','serverversion','visittype','phc','pending','docid',)
-    search_fields = ('visitentityid','entityidec','anmid',)
+# class PocInfoAdmin(admin.ModelAdmin):    
+#     list_display = ('visitentityid','entityidec','anmid','level','clientversion','serverversion','visittype','phc','pending','docid',)
+#     search_fields = ('visitentityid','entityidec','anmid',)
 
-    def get_actions(self, request):
-        actions = super(PocInfoAdmin, self).get_actions(request)
-        del actions['delete_selected']
-        return actions
+#     def get_actions(self, request):
+#         actions = super(PocInfoAdmin, self).get_actions(request)
+#         del actions['delete_selected']
+#         return actions
 
-    def has_delete_permission(self, request, obj=None):
-        return False
+#     def has_delete_permission(self, request, obj=None):
+#         return False
 
-class DocInfoAdmin(admin.ModelAdmin):
-    list_display= ('docname','phc',)
-    search_fields = ('docname',)
+# class DocInfoAdmin(admin.ModelAdmin):
+#     list_display= ('docname','phc',)
+#     search_fields = ('docname',)
 
-    def get_actions(self, request):
-        actions = super(DocInfoAdmin, self).get_actions(request)
-        del actions['delete_selected']
-        return actions
+#     def get_actions(self, request):
+#         actions = super(DocInfoAdmin, self).get_actions(request)
+#         del actions['delete_selected']
+#         return actions
 
-    def has_delete_permission(self, request, obj=None):
-        return False
+#     def has_delete_permission(self, request, obj=None):
+#         return False
         
 class UserMaintenanceAdmin(admin.ModelAdmin):
     form = UserMaintenaceForm
@@ -328,18 +328,17 @@ class HealthCenterAdmin(admin.ModelAdmin):
 class AppConfigurationAdmin(admin.ModelAdmin):
     list_display = ('wife_age_min','wife_age_max','husband_age_min','husband_age_max','temperature_units','country_name',)
     search_fields = ('wife_age_min',)
-    fieldsets = (
+    fieldsets = [
       (None, {
-          'fields': ('country_name','temperature_units','registration_text','poc_text','escalation_schedule')
+          'fields': ['country_name','temperature_units','escalation_schedule','is_highrisk']
       }),
       ('Wife age', {
-          'fields': ('wife_age_min','wife_age_max')
+          'fields': ['wife_age_min','wife_age_max'], 'classes': ['collapse']
       }),
       ('Husband age', {
-          'fields': ('husband_age_min','husband_age_max')
+          'fields': ['husband_age_min','husband_age_max'], 'classes':['collapse']
       }),
-
-   )
+   ]
 
     def get_actions(self, request):
         actions = super(AppConfigurationAdmin, self).get_actions(request)
@@ -360,15 +359,40 @@ class FormFieldsAdmin(admin.ModelAdmin):
     def has_delete_permission(self, request, obj=None):
         return False
 
-admin.site.register(DimAnm,DimAnmAdmin)
-admin.site.register(DimPhc,DimPhcAdmin)
+class VisitConfigurationAdmin(admin.ModelAdmin):
+    list_display = ('anc_visit1_from_week','anc_visit1_to_week','anc_visit2_from_week','anc_visit2_to_week','anc_visit3_from_week','anc_visit3_to_week','anc_visit4_from_week','anc_visit4_to_week')
+    search_fields = ('anc_visit1_from_week',)
+    fieldsets = (
+        ('Anc Visit1', {
+            'fields': ('anc_visit1_from_week','anc_visit1_to_week') 
+            }),
+        ('Anc Visit2', {
+            'fields': ('anc_visit2_from_week','anc_visit2_to_week') 
+            }),
+        ('Anc Visit3', {
+            'fields': ('anc_visit3_from_week','anc_visit3_to_week') 
+            }),
+        ('Anc Visit4', {
+            'fields': ('anc_visit4_from_week','anc_visit4_to_week') 
+            }),
+        )
+    def get_actions(self, request):
+        actions = super(VisitConfigurationAdmin, self).get_actions(request)
+        del actions['delete_selected']
+        return actions
+
+    def has_delete_permission(self, request, obj=None):
+        return False
+
+#admin.site.register(DimAnm,DimAnmAdmin)
+#admin.site.register(DimPhc,DimPhcAdmin)
 admin.site.register(DrugInfo,DrugInfoAdmin)
 admin.site.register(Frequency,FrequencyAdmin)
 admin.site.register(Dosage,DosageAdmin)
 admin.site.register(Directions,DirectionsAdmin)
 admin.site.register(ICD10,ICD10Admin)
 admin.site.register(Investigations,InvestigationAdmin)
-admin.site.register(PocInfo,PocInfoAdmin)
+#admin.site.register(PocInfo,PocInfoAdmin)
 admin.site.register(UserMasters,UserMaintenanceAdmin)
 admin.site.register(CountryTb,CountryAdmin)
 admin.site.register(CountyTb,CountyAdmin)
@@ -378,3 +402,4 @@ admin.site.register(LocationTab,LocationTabAdmin)
 admin.site.register(HealthCenters,HealthCenterAdmin)
 admin.site.register(AppConfiguration,AppConfigurationAdmin)
 admin.site.register(FormFields,FormFieldsAdmin)
+admin.site.register(VisitConfiguration,VisitConfigurationAdmin)

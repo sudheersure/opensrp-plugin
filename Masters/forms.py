@@ -1,15 +1,15 @@
 from django import forms
 from Masters.models import *
 
-class UserInfoForm(forms.ModelForm):
-    password = forms.CharField(widget=forms.PasswordInput)
-    class Meta:
-        model = DimUserLogin
-        widgets = {
-        'password': forms.PasswordInput(),
+# class UserInfoForm(forms.ModelForm):
+#     password = forms.CharField(widget=forms.PasswordInput)
+#     class Meta:
+#         model = DimUserLogin
+#         widgets = {
+#         'password': forms.PasswordInput(),
 
-    }
-    	fields = '__all__'
+#     }
+#     	fields = '__all__'
 
 class HosForm(forms.ModelForm):
     class Meta:
