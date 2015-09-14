@@ -615,13 +615,13 @@ class HospitalType(models.Model):
 
 class CountryTb(models.Model):
     #id = models.IntegerField(primary_key=True)  # AutoField?
-    country_name = models.CharField(max_length=100,unique=True)
+    country_name = models.CharField(max_length=100)
     country_code=models.CharField(max_length=10)
     active = models.BooleanField(default=True)
 
     class Meta:
         verbose_name_plural="COUNTRY"
-        #managed = False
+        managed = False
         db_table = 'country_tb'
         verbose_name="COUNTRY"
 
@@ -634,10 +634,9 @@ class CountyTb(models.Model):
     county_name = models.CharField(max_length=100,unique=True)
     active = models.BooleanField(default=True)
 
-
     class Meta:
         verbose_name_plural="COUNTY"
-        #managed = False
+        managed = False
         db_table = 'county_tb'
         verbose_name="COUNTY"
     def __unicode__(self):
@@ -645,8 +644,8 @@ class CountyTb(models.Model):
 
 class Disttab(models.Model):
     #id = models.IntegerField(primary_key=True)  # AutoField?
-    country_name = models.CharField(max_length=100)
-    county_name = models.CharField(max_length=100)
+    country_name = models.ForeignKey(CountryTb, db_column='country_name',limit_choices_to={'active': True})
+    county_name = models.ForeignKey(CountyTb, db_column='county_name',limit_choices_to={'active': True})
     district_name = models.CharField(unique=True, max_length=100)
     active = models.BooleanField(default=True)
 
@@ -654,56 +653,65 @@ class Disttab(models.Model):
         #managed = False
         verbose_name_plural="DISTRICT"
         verbose_name="DISTRICT"
-        db_table = 'disttab'
+        db_table = 'district_tb'
+
+    def __unicode__(self):
+        return self.district_name
 
 class SubdistrictTab(models.Model):
     #id = models.IntegerField(primary_key=True)  # AutoField?
-    country = models.CharField(max_length=100, blank=True)
-    county = models.CharField(max_length=100, blank=True)
-    district = models.CharField(max_length=100, blank=True)
+    country = models.ForeignKey(CountryTb, db_column='country',limit_choices_to={'active': True})
+    county = models.ForeignKey(CountyTb, db_column='county',limit_choices_to={'active': True})
+    district = models.ForeignKey(Disttab, db_column='district',limit_choices_to={'active': True})
     subdistrict = models.CharField(unique=True, max_length=100, blank=True)
     active = models.BooleanField(default=True)
 
     class Meta:
-        #managed = False
+        managed = False
         verbose_name_plural="SUBDISTRICT"
         verbose_name="SUBDISTRICT"
         db_table = 'subdistrict_tab'
+    def __unicode__(self):
+        return self.subdistrict
 
 class LocationTab(models.Model):
     #id = models.IntegerField(primary_key=True)  # AutoField?
-    country = models.CharField(max_length=100, blank=True)
-    county = models.CharField(max_length=100, blank=True)
-    district = models.CharField(max_length=100, blank=True)
-    subdistrict = models.CharField(max_length=100, blank=True)
+    country = models.ForeignKey(CountryTb, db_column='country')
+    county = models.ForeignKey(CountyTb, db_column='county')
+    district = models.ForeignKey(Disttab, db_column='district')
+    subdistrict = models.ForeignKey(SubdistrictTab,db_column='subdistrict',limit_choices_to={'active': True})
     location = models.CharField(unique=True, max_length=100, blank=True)
     active = models.BooleanField(default=True)
 
     class Meta:
-        #managed = False
+        managed = False
         verbose_name_plural="LOCATIONS"
         verbose_name="LOCATIONS"
         db_table = 'location_tab'
+    def __unicode__(self):
+        return self.location
 
 class HealthCenters(models.Model):
-    #id = models.IntegerField(unique=True,primary_key=True)
-    hospital_name = models.CharField(max_length=200)
+    #id = models.IntegerField(primary_key=True)
+    hospital_name = models.CharField(unique=True, max_length=200)
     hospital_type = models.CharField(max_length=200)
     hospital_address = models.CharField(max_length=200)
-    country_name = models.CharField(max_length=200)
-    county_name = models.CharField(max_length=200)
-    district_name = models.CharField(max_length=200)
-    subdistrict_name = models.CharField(max_length=200)
-    location = models.CharField(max_length=200)
+    country_name = models.ForeignKey(CountryTb, db_column='country_name',limit_choices_to={'active': True})
+    county_name = models.ForeignKey(CountyTb, db_column='county_name',null=True,blank=True,limit_choices_to={'active': True})
+    district_name = models.ForeignKey(Disttab, db_column='district_name',null=True,limit_choices_to={'active': True})
+    subdistrict_name = models.ForeignKey(SubdistrictTab, db_column='subdistrict_name',null=True,limit_choices_to={'active': True})
+    #location = models.CharField(max_length=200)
     parent_hospital = models.CharField(max_length=200)
     villages = models.CharField(max_length=200)
     active = models.BooleanField(default=True)
 
     class Meta:
-        #managed = False
-        verbose_name_plural="HEALTHCENTERS"
+        managed = False
         db_table = 'health_centers'
-        verbose_name= 'HEALTHCENTERS'
+        verbose_name_plural="HEALTH CENTERS"
+        verbose_name="HEALTH CENTERS"
+    def __unicode__(self):
+        return self.hospital_name
 
 class AppConfiguration(models.Model):
     IS_HIGHRISK = (('TB', 'TB'),
