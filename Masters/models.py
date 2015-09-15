@@ -621,7 +621,7 @@ class CountryTb(models.Model):
 
     class Meta:
         verbose_name_plural="COUNTRY"
-        managed = False
+        #managed = False
         db_table = 'country_tb'
         verbose_name="COUNTRY"
 
@@ -636,7 +636,7 @@ class CountyTb(models.Model):
 
     class Meta:
         verbose_name_plural="COUNTY"
-        managed = False
+        #managed = False
         db_table = 'county_tb'
         verbose_name="COUNTY"
     def __unicode__(self):
@@ -667,7 +667,7 @@ class SubdistrictTab(models.Model):
     active = models.BooleanField(default=True)
 
     class Meta:
-        managed = False
+        #managed = False
         verbose_name_plural="SUBDISTRICT"
         verbose_name="SUBDISTRICT"
         db_table = 'subdistrict_tab'
@@ -684,7 +684,7 @@ class LocationTab(models.Model):
     active = models.BooleanField(default=True)
 
     class Meta:
-        managed = False
+        #managed = False
         verbose_name_plural="LOCATIONS"
         verbose_name="LOCATIONS"
         db_table = 'location_tab'
@@ -693,7 +693,7 @@ class LocationTab(models.Model):
 
 class HealthCenters(models.Model):
     #id = models.IntegerField(primary_key=True)
-    hospital_name = models.CharField(unique=True, max_length=200)
+    hospital_name = models.CharField( max_length=200)
     hospital_type = models.CharField(max_length=200)
     hospital_address = models.CharField(max_length=200)
     country_name = models.ForeignKey(CountryTb, db_column='country_name',limit_choices_to={'active': True})
@@ -706,7 +706,7 @@ class HealthCenters(models.Model):
     active = models.BooleanField(default=True)
 
     class Meta:
-        managed = False
+        #managed = False
         db_table = 'health_centers'
         verbose_name_plural="HEALTH CENTERS"
         verbose_name="HEALTH CENTERS"
@@ -731,7 +731,7 @@ class AppConfiguration(models.Model):
     is_highrisk = MultiSelectField(choices=IS_HIGHRISK,null=True,blank=True)
 
     class Meta:
-        managed = False
+        #managed = False
         db_table = 'app_configuration'
         verbose_name_plural="APP CONFIGURATION"
         verbose_name="APP CONFIGURATION"
@@ -768,7 +768,7 @@ class VisitConfiguration(models.Model):
     anc_visit4_from_week = models.IntegerField(blank=True, null=True)
     anc_visit4_to_week = models.IntegerField(blank=True, null=True)        
     class Meta:
-        managed = False
+        #managed = False
         db_table = 'visit_configuration'
         verbose_name_plural="VISIT CONFIGURATION"
         verbose_name="VISIT CONFIGURATION"
